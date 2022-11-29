@@ -1,0 +1,6 @@
+AC_type,Speed,Seats,TAT,Charging,Range,Runway,Lease_c,Operating_c,Time_c,Fuel_c,Energy_c
+Regional Turboprop,550,45,25,0,1500,1400,15000,300,750,1.0,0
+Regional Jet,820,70,35,0,3300,1600,34000,600,775,2.0,0
+Single Aisle Twin Engine Jet,850,150,45,0,6300,1800,80000,1250,1400,3.75,0
+Electric twinprop aircraft,350,20,20,20,400,750,12000,90,750,0,2130
+Electric regional aircraft,480,48,25,45,1000,950,22000,120,750,0,8216
