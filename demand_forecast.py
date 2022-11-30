@@ -10,13 +10,26 @@ import statsmodels.api as sms
 
 class DemandForecast:
 
-    def __init__(self, airport_data, demand_data, distance_data, annual_growth):
-        self.airport_data = airport_data
-        self.demand_data = demand_data
-        self.distance_data = distance_data
-        self.annual_growth = annual_growth
+    def __init__(self, airport_data, demand_data, distance_data, annual_growth, fuel_cost=1.42):
+        """
 
-        self.fuel_cost = 1.42  # USD/gallon
+        :param airport_data: Path to airport data CSV
+        :type airport_data: str
+        :param demand_data: Path to demand data CSV
+        :type demand_data: str
+        :param distance_data: Path to distance data CSV
+        :type distance_data: str
+        :param annual_growth: Path to annual growth CSV
+        :type annual_growth: str
+        :param fuel_cost: Cost of fuel in USD/gallon. By default 1.42
+        :type fuel_cost: float
+        """
+        self.airport_data = pd.read_csv(airport_data, index_col=1)
+        self.demand_data = pd.read_csv(demand_data, index_col=0)
+        self.distance_data = pd.read_csv(distance_data, index_col=0)
+        self.annual_growth = pd.read_csv(annual_growth, index_col=False, header=None).values[0][0]
+
+        self.fuel_cost = fuel_cost  # USD/gallon
         self.data = pd.DataFrame(columns=['Demand', 'Population', 'GDP', 'Fuel_Dist'])
 
         self.K = 0
@@ -24,32 +37,29 @@ class DemandForecast:
         self.b2 = 0
         self.b3 = 0
 
-    # Load data from CSV files
-    def format_data(self):
-        airport_info = pd.read_csv(self.airport_data, index_col=1)
-        demand_2020 = pd.read_csv(self.demand_data, index_col=0)
-        distances = pd.read_csv(self.distance_data, index_col=0)
+        np.seterr(invalid='ignore', divide='ignore')
 
+    def format_data(self):
         # Filter Data for Population, GDP, and Airport ICAO codes
-        pop_list_2020 = airport_info["Population"]
-        gdp_list_2020 = airport_info["GDP"]
-        airport_names = airport_info.index  # Complete list of airport ICAO codes
-        demand_airports = demand_2020.index  # List of airport ICAO codes with known demand
+        pop_list_2020 = self.airport_data["Population"]
+        gdp_list_2020 = self.airport_data["GDP"]
+        airport_names = self.airport_data.index  # Complete list of airport ICAO codes
+        demand_airports = self.demand_data.index  # List of airport ICAO codes with known demand
 
         # Create matrices for each data group
-        demand_log = np.log(demand_2020)
-        pop_matrix = demand_2020.copy()
-        gdp_matrix = demand_2020.copy()
-        dst_matrix = np.log(distances.loc[demand_airports][demand_airports] * self.fuel_cost) * -1
+        demand_log = np.log(self.demand_data)
+        pop_matrix = self.demand_data.copy()
+        gdp_matrix = self.demand_data.copy()
+        dst_matrix = -1 * np.log(self.distance_data.loc[demand_airports][demand_airports] * self.fuel_cost)
 
-        # Fill population and GDP matrices ln(pop_i * pop_j) and ln(GDP_i * GDP_j)
+        # Fill population and GDP matrices with ln(pop_i * pop_j) and ln(GDP_i * GDP_j)
         for i in range(len(pop_list_2020)):
             for j in range(len(pop_list_2020)):
                 pop_i = pop_list_2020[i]
                 pop_j = pop_list_2020[j]
                 gdp_i = gdp_list_2020[i]
                 gdp_j = gdp_list_2020[j]
-                pop_product = pop_j * pop_j
+                pop_product = pop_i * pop_j
                 gdp_product = gdp_i * gdp_j
                 if airport_names[i] in demand_airports and airport_names[j] in demand_airports:
                     pop_matrix.at[airport_names[i], airport_names[j]] = np.log(pop_product)
@@ -78,12 +88,13 @@ class DemandForecast:
         log(D_ij) = log(k) + b1 * log(pop_i * pop_j) + b2 * log(GDP_i * GDP_j) + b3 * -log(fuel_cost * d_ij)
         Y = alpha + beta_1 * X1 + beta_2 * X2 + beta_3 * X3
         """
+        self.format_data()
+
         Y = self.data['Demand']
         X = self.data[['Population', 'GDP', 'Fuel_Dist']]
         X = sms.add_constant(X)
 
         est = sms.OLS(Y, X).fit()
-        print(est.summary())
 
         params = est.params
 
@@ -92,5 +103,41 @@ class DemandForecast:
         self.b2 = params['GDP']
         self.b3 = params['Fuel_Dist']
 
-    def forecast_population(self):
+    def gravity_model(self, data, i, j):
+        demand = self.K * (data["Population"][i] * data["Population"][j]) ** self.b1 \
+                 * (data["GDP"][i] * data["GDP"][j]) ** self.b2 / (self.fuel_cost * self.distance_data[i][j]) ** self.b3
+        return demand
 
+    def forecast_demand(self):
+        params = [self.K, self.b1, self.b2, self.b3]
+        if all(param == 0 for param in params):
+            print("=== Calibrating Model ===")
+            self.calibrate()
+            print("Parameters Calibrated")
+            print("K :", self.K, "\nb1:", self.b1, "\nb2:", self.b2, "\nb3:", self.b3)
+        forecasted_data = self.airport_data.copy()
+        forecasted_data["Population"] = forecasted_data["Population"] * self.annual_growth
+
+        airport_names = self.airport_data.index.to_list()
+
+        forecasted_demand = pd.DataFrame(columns=airport_names, index=airport_names)
+
+        for i in airport_names:
+            for j in airport_names:
+                if i == j:
+                    forecasted_demand[i][j] = 0
+                    continue
+                forecasted_demand[i][j] = self.gravity_model(forecasted_data, i, j)
+
+        return forecasted_demand
+
+
+if __name__ == '__main__':
+    airport_data_path = "Groups_data/Group_17_Airport_info.csv"
+    demand_data_path = "Groups_data/Group_17_Demand.csv"
+    distance_data_path = "Groups_data/Group_17_Distances.csv"
+    annual_growth_data_path = "Groups_data/Group_17_Annual_growth.csv"
+
+    demand_model = DemandForecast(airport_data_path, demand_data_path, distance_data_path, annual_growth_data_path)
+    forecast_demand = demand_model.forecast_demand()
+    print(forecast_demand)
