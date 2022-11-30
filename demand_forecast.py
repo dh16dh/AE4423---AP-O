@@ -1,5 +1,6 @@
 """
-Demand forecast for future demand
+Demand forecast for future demand.
+
 @author: David Hartong
 """
 
@@ -12,6 +13,14 @@ class DemandForecast:
 
     def __init__(self, airport_data, demand_data, distance_data, annual_growth, fuel_cost=1.42):
         """
+        Creates DemandForecast class object, which takes path information for all relevant data files and optional
+        fuel cost value
+
+        Use forecast_demand() function to retrieve the forecasted demand matrix for the 15 given airports.
+
+        Optional: Use calibrate() function to calibrate the model to retrieve model parameters as class properties
+        (K, b1, b2, b3)
+
 
         :param airport_data: Path to airport data CSV
         :type airport_data: str
@@ -75,18 +84,17 @@ class DemandForecast:
                                  columns=['Demand', 'Population', 'GDP', 'Fuel_Dist'])
         self.data = self.data.replace([np.inf, -np.inf], np.nan).dropna()
 
-        return self.data
-
     def calibrate(self):
         """
         Calibrates gravity model using OLS. Sets calibration constant and parameters
         based on result.
 
         Non-Linear model:
-        D_ij = k (pop_i * pop_j)^b1 * (GDP_i * GDP_j)^b2 / (fuel_cost * d_ij)^b3
+            D_{ij} = k (pop_i * pop_j)^{b_1} * (GDP_i * GDP_j)^{b_2} / (fuel_cost * d_ij)^{b_3}
         Linearised model:
-        log(D_ij) = log(k) + b1 * log(pop_i * pop_j) + b2 * log(GDP_i * GDP_j) + b3 * -log(fuel_cost * d_ij)
-        Y = alpha + beta_1 * X1 + beta_2 * X2 + beta_3 * X3
+            log(D_ij) = log(k) + b1 * log(pop_i * pop_j) + b2 * log(GDP_i * GDP_j) + b3 * -log(fuel_cost * d_ij)
+
+            Y = alpha + beta_1 * X1 + beta_2 * X2 + beta_3 * X3
         """
         self.format_data()
 
