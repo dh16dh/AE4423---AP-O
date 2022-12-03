@@ -11,7 +11,7 @@ import statsmodels.api as sms
 
 class DemandForecast:
 
-    def __init__(self, airport_data, demand_data, distance_data, annual_growth, fuel_cost=1.42):
+    def __init__(self, airport_data, demand_data, distance_data, annual_growth, years=10, fuel_cost=1.42):
         """
         Creates DemandForecast class object, which takes path information for all relevant data files and optional
         fuel cost value
@@ -38,6 +38,7 @@ class DemandForecast:
         self.distance_data = pd.read_csv(distance_data, index_col=0)
         self.annual_growth = pd.read_csv(annual_growth, index_col=False, header=None).values[0][0]
 
+        self.years = years  # Number of years to forecast
         self.fuel_cost = fuel_cost  # USD/gallon
         self.data = pd.DataFrame(columns=['Demand', 'Population', 'GDP', 'Fuel_Dist'])
 
@@ -124,7 +125,7 @@ class DemandForecast:
             print("Parameters Calibrated")
             print("K :", self.K, "\nb1:", self.b1, "\nb2:", self.b2, "\nb3:", self.b3)
         forecasted_data = self.airport_data.copy()
-        forecasted_data["Population"] = forecasted_data["Population"] * self.annual_growth
+        forecasted_data["Population"] = forecasted_data["Population"] * self.annual_growth ** self.years
 
         airport_names = self.airport_data.index.to_list()
 
