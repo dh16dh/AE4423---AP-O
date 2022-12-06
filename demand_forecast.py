@@ -150,3 +150,5 @@ if __name__ == '__main__':
     demand_model = DemandForecast(airport_data_path, demand_data_path, distance_data_path, annual_growth_data_path)
     forecast_demand = demand_model.forecast_demand()
     print(forecast_demand)
+
+    forecast_demand.to_csv('Demand_2030.csv')

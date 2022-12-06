@@ -1,9 +1,9 @@
 """
 
 """
-
+import numpy as np
 import pandas as pd
-from gurobipy import Model, GRB, LinExpr
+from gurobipy import Model, GRB, LinExpr, quicksum
 from demand_forecast import DemandForecast
 
 
@@ -50,7 +50,7 @@ class LegBasedModel:
         self.K = parameter_set.aircraft_data.index.to_list()[0:3]
 
         # Define Revenue Parameters
-        self.Yield = parameter_set.yield_matrix  # ij
+        self.Yield = parameter_set.yield_matrix.replace(np.inf, 0)  # ij
         self.d = parameter_set.distance_matrix  # ij
         # Define Cost Parameters
         self.C_Lk = parameter_set.lease_cost  # k
@@ -84,14 +84,55 @@ class LegBasedModel:
                 w[i, j] = model.addVar(obj=self.Yield[i][j] * self.d[i][j] * 0.9, lb=0, vtype=GRB.INTEGER)
                 for k in self.K:
                     z[i, j, k] = model.addVar(
-                        obj=-(1 - 0.3 * (1 - self.g[i]) - 0.3 * (self.g[j])) * self.C_Xk[k] + self.d[i][j] *
-                            (self.C_Tk[k] + self.C_Fk[k]), lb=0, vtype=GRB.INTEGER)
+                        obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
+                        (self.C_Tk[k] + self.C_Fk[k]))), lb=0, vtype=GRB.INTEGER)
         for k in self.K:
-            AC[k] = model.addVar(obj=-self.C_Lk, lb=0, vtype=GRB.INTEGER)
-
+            AC[k] = model.addVar(lb=0, vtype=GRB.INTEGER)
+            # Currently adding number of aircraft as DV but not part of OF
         model.update()
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
 
+        # Define Constraints
+        for i in self.N:
+            for j in self.N:
+                model.addConstr(x[i, j] + w[i, j] <= self.q[i][j], name='C1')
+                model.addConstr(w[i, j] <= self.q[i][j] * self.g[i] * self.g[j], name='C1*')
+                model.addConstr(x[i, j] + quicksum(w[i, m] * (1 - self.g[j]) for m in self.N) +
+                                quicksum(w[m, j] * (1 - self.g[i]) for m in self.N) <=
+                                quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
+            for k in self.K:
+                model.addConstr(quicksum(z[i, j, k] for j in self.N) == quicksum(z[j, i, k] for j in self.N), name='C3')
+        for k in self.K:
+            model.addConstr(quicksum(quicksum(
+                z[i, j, k] * (self.d[i][j] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j]))) for j in self.N)
+                                     for i in self.N) <= self.BT[k] * AC[k], name='C4')
+            # Range and Budget constraint formulation to be done.
+        model.update()
+
+        model.optimize()
+        status = model.status
+
+        if status == GRB.Status.UNBOUNDED:
+            print('The model cannot be solved because it is unbounded')
+
+        elif status == GRB.Status.OPTIMAL or True:
+            f_objective = model.objVal
+            print('***** RESULTS ******')
+            print('\nObjective Function Value: \t %g' % f_objective)
+
+        elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
+            print('Optimization was stopped with status %d' % status)
+
+        print()
+        print("Frequencies:----------------------------------")
+        print()
+        for i in self.N:
+            for j in self.N:
+                for k in self.K:
+                    if z[i, j, k].X > 0:
+                        print(i, 'to', j, z[i, j, k].X, 'with AC', k)
+        for k in self.K:
+            print(AC[k].X)
 
 class ElectricACModel:
     def __init__(self):
@@ -107,3 +148,5 @@ if __name__ == '__main__':
 
     parameters = Parameters()
     model1 = LegBasedModel()
+
+    model1.network_fleet_model()
