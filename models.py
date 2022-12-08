@@ -3,6 +3,7 @@
 """
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 from gurobipy import Model, GRB, LinExpr, quicksum
 from demand_forecast import DemandForecast
 
@@ -32,8 +33,8 @@ class Parameters:
         self.seat_list = self.aircraft_data['Seats']
         self.speed_list = self.aircraft_data['Speed']
         self.LF = 0.8
-        self.TAT = self.aircraft_data['TAT']/60
-        self.ChargeTime = self.aircraft_data['Charging']/60
+        self.TAT = self.aircraft_data['TAT'] / 60
+        self.ChargeTime = self.aircraft_data['Charging'] / 60
         self.BT = pd.Series(bt_list, name='Block Time', index=self.aircraft_data.index)
         self.Range = self.aircraft_data['Range']
 
@@ -43,7 +44,8 @@ class Parameters:
         self.fuel_cost = self.aircraft_data['Fuel_c'] * self.fuel_cost_usdgal / 1.5  # Needs to be multiplied by d_{ij}
 
         self.energy_price = 0.07  # Wh/eur
-        self.energy_cost = self.energy_price * self.aircraft_data['Energy_c'] / self.aircraft_data['Range']  # Needs to be multiplied by d_{ij}
+        self.energy_cost = self.energy_price * self.aircraft_data['Energy_c'] / self.aircraft_data[
+            'Range']  # Needs to be multiplied by d_{ij}
 
 
 class LegBasedModel:
@@ -83,6 +85,22 @@ class LegBasedModel:
                     else:
                         self.a[i, j, k] = 0
 
+    def plot_routes(self):
+        airport_data = parameters.airport_data
+
+        fig = go.Figure(data=go.Scattergeo())
+
+        # Add airports:
+        fig.add_trace(go.Scattergeo(
+            lon=airport_data['Longitude (deg)'],
+            lat=airport_data['Latitude (deg)'],
+            text=airport_data['ICAO Code']
+
+        ))
+
+        fig.show()
+
+
     def network_fleet_model(self):
 
         model = Model("NFM")
@@ -101,7 +119,8 @@ class LegBasedModel:
                 for k in self.K:
                     z[i, j, k] = model.addVar(
                         obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (1 - self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
-                        (self.C_Tk[k] + self.C_Fk[k]))), lb=0, vtype=GRB.INTEGER)
+                                                                                     (self.C_Tk[k] + self.C_Fk[k]))),
+                        lb=0, vtype=GRB.INTEGER)
         for k in self.K:
             AC[k] = model.addVar(obj=-self.C_Lk[k], lb=0, vtype=GRB.INTEGER)
             # Currently adding number of aircraft as DV but not part of OF
@@ -145,19 +164,22 @@ class LegBasedModel:
 
         print()
         print("Frequencies:----------------------------------")
-        print()
+
+        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow', 'Transfer Flow'])
+
         for i in self.N:
             for j in self.N:
                 for k in self.K:
                     if z[i, j, k].X > 0:
-                        print(i, 'to', j, z[i, j, k].X, 'with', k)
+                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w[i, j].X]],
+                                               columns=['Origin', 'Destination', 'Frequency', 'AC Type',
+                                                        'Direct Flow', 'Transfer Flow'])
+                        result = pd.concat([result, new_row])
         print('Fleet')
         for k in self.K:
             print('Leasing', k, ':', AC[k].X)
 
-class ElectricACModel:
-    def __init__(self):
-        pass
+        return result
 
 
 if __name__ == '__main__':
@@ -170,4 +192,6 @@ if __name__ == '__main__':
     parameters = Parameters()
     model1 = LegBasedModel()
 
-    model1.network_fleet_model()
+    final_result = model1.network_fleet_model()
+    final_result.to_csv('Leg-Based Results.csv')
+    model1.plot_routes()
