@@ -32,7 +32,7 @@ class Parameters:
         self.seat_list = self.aircraft_data['Seats']
         self.speed_list = self.aircraft_data['Speed']
         self.LF = 0.8
-        self.TAT = self.aircraft_data['TAT']
+        self.TAT = self.aircraft_data['TAT']/60
         self.BT = pd.Series(bt_list, name='Block Time', index=self.aircraft_data.index)
 
         self.lease_cost = self.aircraft_data['Lease_c']  # Needs to be multiplied by AC^k (weekly cost per aircraft)
@@ -87,7 +87,7 @@ class LegBasedModel:
                         obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (1 - self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
                         (self.C_Tk[k] + self.C_Fk[k]))), lb=0, vtype=GRB.INTEGER)
         for k in self.K:
-            AC[k] = model.addVar(obj= - self.C_Lk[k], lb=0, vtype=GRB.INTEGER)
+            AC[k] = model.addVar(obj=-self.C_Lk[k], lb=0, vtype=GRB.INTEGER)
             # Currently adding number of aircraft as DV but not part of OF
         model.update()
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
