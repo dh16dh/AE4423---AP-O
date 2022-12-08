@@ -33,12 +33,17 @@ class Parameters:
         self.speed_list = self.aircraft_data['Speed']
         self.LF = 0.8
         self.TAT = self.aircraft_data['TAT']/60
+        self.ChargeTime = self.aircraft_data['Charging']/60
         self.BT = pd.Series(bt_list, name='Block Time', index=self.aircraft_data.index)
+        self.Range = self.aircraft_data['Range']
 
         self.lease_cost = self.aircraft_data['Lease_c']  # Needs to be multiplied by AC^k (weekly cost per aircraft)
         self.operating_cost = self.aircraft_data['Operating_c']  # Needs to be multiplied by z_{ij} (per flight leg)
         self.time_cost = self.aircraft_data['Time_c'] / self.aircraft_data['Speed']  # Needs to be multiplied by d_{ij}
         self.fuel_cost = self.aircraft_data['Fuel_c'] * self.fuel_cost_usdgal / 1.5  # Needs to be multiplied by d_{ij}
+
+        self.energy_price = 0.07  # Wh/eur
+        self.energy_cost = self.energy_price * self.aircraft_data['Energy_c'] / self.aircraft_data['Range']  # Needs to be multiplied by d_{ij}
 
 
 class LegBasedModel:
@@ -66,6 +71,17 @@ class LegBasedModel:
         self.LF = parameter_set.LF  # const
         self.LTO = parameter_set.TAT  # k
         self.BT = parameter_set.BT  # k
+        self.Range = parameter_set.Range
+
+        # Create binary matrix for range constraint
+        self.a = {}
+        for i in self.N:
+            for j in self.N:
+                for k in self.K:
+                    if self.d[i][j] < self.Range[k]:
+                        self.a[i, j, k] = 1
+                    else:
+                        self.a[i, j, k] = 0
 
     def network_fleet_model(self):
 
@@ -106,7 +122,11 @@ class LegBasedModel:
             model.addConstr(quicksum(quicksum(
                 z[i, j, k] * (self.d[i][j] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j]))) for j in self.N)
                                      for i in self.N) <= self.BT[k] * 7 * AC[k], name='C4')
-            # Range and Budget constraint formulation to be done.
+        for i in self.N:
+            for j in self.N:
+                for k in self.K:
+                    model.addConstr(z[i, j, k] <= self.a[i, j, k] * 999, name='C5')
+
         model.update()
 
         model.optimize()
@@ -130,9 +150,10 @@ class LegBasedModel:
             for j in self.N:
                 for k in self.K:
                     if z[i, j, k].X > 0:
-                        print(i, 'to', j, z[i, j, k].X, 'with AC', k)
+                        print(i, 'to', j, z[i, j, k].X, 'with', k)
+        print('Fleet')
         for k in self.K:
-            print(AC[k].X)
+            print('Leasing', k, ':', AC[k].X)
 
 class ElectricACModel:
     def __init__(self):
