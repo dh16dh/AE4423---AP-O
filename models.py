@@ -84,10 +84,10 @@ class LegBasedModel:
                 w[i, j] = model.addVar(obj=self.Yield[i][j] * self.d[i][j] * 0.9, lb=0, vtype=GRB.INTEGER)
                 for k in self.K:
                     z[i, j, k] = model.addVar(
-                        obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
+                        obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (1 - self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
                         (self.C_Tk[k] + self.C_Fk[k]))), lb=0, vtype=GRB.INTEGER)
         for k in self.K:
-            AC[k] = model.addVar(lb=0, vtype=GRB.INTEGER)
+            AC[k] = model.addVar(obj= - self.C_Lk[k], lb=0, vtype=GRB.INTEGER)
             # Currently adding number of aircraft as DV but not part of OF
         model.update()
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
@@ -105,7 +105,7 @@ class LegBasedModel:
         for k in self.K:
             model.addConstr(quicksum(quicksum(
                 z[i, j, k] * (self.d[i][j] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j]))) for j in self.N)
-                                     for i in self.N) <= self.BT[k] * AC[k], name='C4')
+                                     for i in self.N) <= self.BT[k] * 7 * AC[k], name='C4')
             # Range and Budget constraint formulation to be done.
         model.update()
 
