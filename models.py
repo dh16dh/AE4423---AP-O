@@ -16,7 +16,7 @@ class Parameters:
                  distance_data="Groups_data/Group_17_Distances.csv",
                  annual_growth="Groups_data/Group_17_Annual_growth.csv"):
         self.aircraft_data = pd.read_csv(aircraft_data, index_col=0)
-        self.airport_data = pd.read_csv(airport_data, index_col=0)
+        self.airport_data = pd.read_csv(airport_data, index_col=1)
 
         forecast_model = DemandForecast(airport_data, demand_data, distance_data, annual_growth)
         forecast_model.calibrate()
@@ -27,7 +27,7 @@ class Parameters:
 
         self.fuel_cost_usdgal = 1.42
         self.demand_matrix = forecast_model.forecast_demand()
-        self.g_values = pd.Series(zero_list, index=self.airport_data['ICAO Code'], name='g value')
+        self.g_values = pd.Series(zero_list, index=self.airport_data.index, name='g value')
         self.distance_matrix = pd.read_csv(distance_data, index_col=0)
         self.yield_matrix = 5.9 * self.distance_matrix ** -0.76 + 0.043
         self.seat_list = self.aircraft_data['Seats']
@@ -52,8 +52,10 @@ class LegBasedModel:
     def __init__(self):
         parameter_set = Parameters()
 
+        # Airport Lookup DB
+
         # Define Sets
-        self.N = parameter_set.airport_data['ICAO Code'].to_list()
+        self.N = parameter_set.airport_data.index.to_list()
         self.K = parameter_set.aircraft_data.index.to_list()[0:3]
 
         # Define Revenue Parameters
@@ -85,21 +87,55 @@ class LegBasedModel:
                     else:
                         self.a[i, j, k] = 0
 
-    def plot_routes(self):
+    def plot_routes(self, routes):
         airport_data = parameters.airport_data
-
         fig = go.Figure(data=go.Scattergeo())
+
+        fig.update_geos(showcountries=True,
+                        showsubunits=True,
+                        lataxis_range=[36, 48],
+                        lonaxis_range=[6, 20],
+                        resolution=50)
+
+        # Add Routes
+        for i in range(len(routes.index)):
+            fig.add_trace(go.Scattergeo(
+                lon=[airport_data['Longitude (deg)'].loc[routes['Origin'].loc[i]],
+                     airport_data['Longitude (deg)'].loc[routes['Destination'].loc[i]]],
+                lat=[airport_data['Latitude (deg)'].loc[routes['Origin'].loc[i]],
+                     airport_data['Latitude (deg)'].loc[routes['Destination'].loc[i]]],
+                mode='lines',
+                line=dict(
+                    width=1,
+                    color='red'
+                ),
+                opacity=routes['Frequency'].loc[i] / routes['Frequency'].max() / 2
+            ))
 
         # Add airports:
         fig.add_trace(go.Scattergeo(
             lon=airport_data['Longitude (deg)'],
             lat=airport_data['Latitude (deg)'],
-            text=airport_data['ICAO Code']
-
+            text=airport_data['City Name'],
+            mode='markers',
+            marker=dict(
+                size=5,
+                color='red'
+            )
         ))
+        fig.add_trace(go.Scattergeo(
+            lon=[airport_data.loc['LIRA']['Longitude (deg)']],
+            lat=[airport_data.loc['LIRA']['Latitude (deg)']],
+            text=airport_data['City Name']['LIRA'],
+            mode='markers',
+            marker=dict(
+                size=10,
+                color='blue'
+            )
+        ))
+        fig.update_layout(showlegend=False)
 
         fig.show()
-
 
     def network_fleet_model(self):
 
@@ -165,16 +201,16 @@ class LegBasedModel:
         print()
         print("Frequencies:----------------------------------")
 
-        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow', 'Transfer Flow'])
+        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow'])
 
         for i in self.N:
             for j in self.N:
                 for k in self.K:
                     if z[i, j, k].X > 0:
-                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w[i, j].X]],
+                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X]],
                                                columns=['Origin', 'Destination', 'Frequency', 'AC Type',
-                                                        'Direct Flow', 'Transfer Flow'])
-                        result = pd.concat([result, new_row])
+                                                        'Direct Flow'])
+                        result = pd.concat([result, new_row], ignore_index=True)
         print('Fleet')
         for k in self.K:
             print('Leasing', k, ':', AC[k].X)
@@ -192,6 +228,7 @@ if __name__ == '__main__':
     parameters = Parameters()
     model1 = LegBasedModel()
 
-    final_result = model1.network_fleet_model()
-    final_result.to_csv('Leg-Based Results.csv')
-    model1.plot_routes()
+    # final_result = model1.network_fleet_model()
+    # final_result.to_csv('Leg-Based Results.csv')
+    route_csv = pd.read_csv('Leg-Based Results.csv')
+    model1.plot_routes(route_csv)
