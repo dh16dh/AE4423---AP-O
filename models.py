@@ -45,6 +45,8 @@ class Parameters:
         self.ChargeTime = self.aircraft_data['Charging'] / 60
         self.BT = pd.Series(bt_list, name='Block Time', index=self.aircraft_data.index)
         self.Range = self.aircraft_data['Range']
+        self.AP_rwy = self.airport_data['Runway (m)']
+        self.AC_rwy = self.aircraft_data['Runway']
 
         self.lease_cost = self.aircraft_data['Lease_c']  # Needs to be multiplied by AC^k (weekly cost per aircraft)
         self.operating_cost = self.aircraft_data['Operating_c']  # Needs to be multiplied by z_{ij} (per flight leg)
@@ -84,6 +86,8 @@ class LegBasedModel:
         self.LTO = self.parameter_set.TAT  # k
         self.BT = self.parameter_set.BT  # k
         self.Range = self.parameter_set.Range
+        self.AP_rwy = self.parameter_set.AP_rwy  # i/j
+        self.AC_rwy = self.parameter_set.AC_rwy   # k
 
         # Create binary matrix for range constraint
         self.a = {}
@@ -94,6 +98,15 @@ class LegBasedModel:
                         self.a[i, j, k] = 1
                     else:
                         self.a[i, j, k] = 0
+        # Create binary matrix for runway constraint
+        self.rwy = {}
+        for i in self.N:
+            for k in self.K:
+                if self.AC_rwy[k] <= self.AP_rwy[i]:
+                    self.rwy[i, k] = 1
+                else:
+                    self.rwy[i, k] = 0
+        print(self.rwy)
 
     def plot_routes(self, routes):
         airport_data = self.parameter_set.airport_data
@@ -189,6 +202,7 @@ class LegBasedModel:
             for j in self.N:
                 for k in self.K:
                     model.addConstr(z[i, j, k] <= self.a[i, j, k] * 999, name='C5')
+                    model.addConstr(z[i, j, k] <= self.rwy[i, k] * self.rwy[j, k] * 999, name='RWY')
 
         model.update()
 
