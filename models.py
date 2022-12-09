@@ -1,12 +1,20 @@
 """
+This file contains the Parameters class that preprocesses parameters required from relevant data files to use in the
+linear programming models.
 
+Dependencies:
+Requires pandas data handling
+Requires gurobipy for solution
+Requires plotly for route map creation
+Requires kaleido to export route map
+
+author: @davidahartong
 """
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from gurobipy import Model, GRB, LinExpr, quicksum
 from demand_forecast import DemandForecast
-
 
 class Parameters:
 
@@ -50,32 +58,32 @@ class Parameters:
 
 class LegBasedModel:
     def __init__(self):
-        parameter_set = Parameters()
+        self.parameter_set = Parameters()
 
         # Airport Lookup DB
 
         # Define Sets
-        self.N = parameter_set.airport_data.index.to_list()
-        self.K = parameter_set.aircraft_data.index.to_list()[0:3]
+        self.N = self.parameter_set.airport_data.index.to_list()
+        self.K = self.parameter_set.aircraft_data.index.to_list()[0:3]
 
         # Define Revenue Parameters
-        self.Yield = parameter_set.yield_matrix.replace(np.inf, 0)  # ij
-        self.d = parameter_set.distance_matrix  # ij
+        self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
+        self.d = self.parameter_set.distance_matrix  # ij
         # Define Cost Parameters
-        self.C_Lk = parameter_set.lease_cost  # k
-        self.C_Xk = parameter_set.operating_cost  # k
-        self.C_Tk = parameter_set.time_cost  # k
-        self.C_Fk = parameter_set.fuel_cost  # k
+        self.C_Lk = self.parameter_set.lease_cost  # k
+        self.C_Xk = self.parameter_set.operating_cost  # k
+        self.C_Tk = self.parameter_set.time_cost  # k
+        self.C_Fk = self.parameter_set.fuel_cost  # k
 
         # Define Constraint Parameters
-        self.q = parameter_set.demand_matrix  # ij
-        self.g = parameter_set.g_values  # i, j
-        self.s = parameter_set.seat_list  # k
-        self.sp = parameter_set.speed_list  # k
-        self.LF = parameter_set.LF  # const
-        self.LTO = parameter_set.TAT  # k
-        self.BT = parameter_set.BT  # k
-        self.Range = parameter_set.Range
+        self.q = self.parameter_set.demand_matrix  # ij
+        self.g = self.parameter_set.g_values  # i, j
+        self.s = self.parameter_set.seat_list  # k
+        self.sp = self.parameter_set.speed_list  # k
+        self.LF = self.parameter_set.LF  # const
+        self.LTO = self.parameter_set.TAT  # k
+        self.BT = self.parameter_set.BT  # k
+        self.Range = self.parameter_set.Range
 
         # Create binary matrix for range constraint
         self.a = {}
@@ -88,7 +96,7 @@ class LegBasedModel:
                         self.a[i, j, k] = 0
 
     def plot_routes(self, routes):
-        airport_data = parameters.airport_data
+        airport_data = self.parameter_set.airport_data
         fig = go.Figure(data=go.Scattergeo())
 
         fig.update_geos(showcountries=True,
@@ -134,7 +142,7 @@ class LegBasedModel:
             )
         ))
         fig.update_layout(showlegend=False)
-
+        fig.write_image('Route_Map.svg')
         fig.show()
 
     def network_fleet_model(self):
@@ -198,19 +206,23 @@ class LegBasedModel:
         elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
             print('Optimization was stopped with status %d' % status)
 
-        print()
-        print("Frequencies:----------------------------------")
-
-        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow'])
+        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow', 'Transfer Flow'])
 
         for i in self.N:
             for j in self.N:
                 for k in self.K:
                     if z[i, j, k].X > 0:
-                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X]],
+                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w[i, j].X]],
                                                columns=['Origin', 'Destination', 'Frequency', 'AC Type',
-                                                        'Direct Flow'])
+                                                        'Direct Flow', 'Transfer Flow'])
                         result = pd.concat([result, new_row], ignore_index=True)
+        for i in self.N:
+            for j in self.N:
+                if w[i, j].X > 0:
+                    new_row = pd.DataFrame([[i, j, np.NaN, np.NaN, x[i, j].X, w[i, j].X]],
+                                           columns=['Origin', 'Destination', 'Frequency', 'AC Type',
+                                                    'Direct Flow', 'Transfer Flow'])
+                    # result = pd.concat([result, new_row], ignore_index=True)
         print('Fleet')
         for k in self.K:
             print('Leasing', k, ':', AC[k].X)
@@ -228,7 +240,7 @@ if __name__ == '__main__':
     parameters = Parameters()
     model1 = LegBasedModel()
 
-    # final_result = model1.network_fleet_model()
-    # final_result.to_csv('Leg-Based Results.csv')
-    route_csv = pd.read_csv('Leg-Based Results.csv')
-    model1.plot_routes(route_csv)
+    final_result = model1.network_fleet_model()
+    final_result.to_csv('Leg-Based Results.csv')
+    # route_csv = pd.read_csv('Leg-Based Results.csv')
+    model1.plot_routes(final_result)
