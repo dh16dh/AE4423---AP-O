@@ -39,7 +39,7 @@
 37,LIPZ,LIPQ,4.0,Regional Turboprop,144.0,0.0
 38,LICJ,LIRA,3.0,Regional Turboprop,92.0,0.0
 39,LICJ,LIBD,1.0,Regional Jet,56.0,0.0
-40,LICJ,LIRQ,1.0,Regional Jet,56.0,5.0
+40,LICJ,LIRQ,1.0,Regional Jet,56.0,6.0
 41,LICJ,LIEE,1.0,Regional Turboprop,36.0,0.0
 42,LICJ,LIRN,2.0,Regional Turboprop,72.0,0.0
 43,LICJ,LIBP,1.0,Regional Turboprop,36.0,0.0
@@ -48,7 +48,7 @@
 46,LIRQ,LIRA,5.0,Regional Turboprop,163.0,0.0
 47,LIRQ,LIBD,1.0,Regional Jet,56.0,0.0
 48,LIRQ,LIPZ,4.0,Regional Turboprop,144.0,0.0
-49,LIRQ,LICJ,1.0,Regional Jet,56.0,6.0
+49,LIRQ,LICJ,1.0,Regional Jet,56.0,5.0
 50,LIRQ,LIEE,1.0,Regional Jet,56.0,0.0
 51,LIRQ,LIPE,6.0,Regional Turboprop,216.0,0.0
 52,LIRQ,LIPY,3.0,Regional Turboprop,102.0,0.0
@@ -56,7 +56,7 @@
 54,LIRQ,LIRN,1.0,Regional Jet,128.0,0.0
 55,LIRQ,LIBP,2.0,Regional Turboprop,72.0,0.0
 56,LIRQ,LIPX,4.0,Regional Turboprop,144.0,0.0
-57,LIRQ,LICA,1.0,Regional Jet,56.0,7.0
+57,LIRQ,LICA,1.0,Regional Jet,56.0,8.0
 58,LIRQ,LIMJ,3.0,Regional Turboprop,108.0,0.0
 59,LIRQ,LIPQ,3.0,Regional Turboprop,108.0,0.0
 60,LIEE,LIRA,2.0,Regional Turboprop,65.0,0.0
@@ -129,7 +129,7 @@
 127,LICA,LIRA,1.0,Regional Jet,78.0,0.0
 128,LICA,LIBD,1.0,Regional Turboprop,36.0,0.0
 129,LICA,LICJ,1.0,Regional Turboprop,36.0,0.0
-130,LICA,LIRQ,1.0,Regional Jet,56.0,8.0
+130,LICA,LIRQ,1.0,Regional Jet,56.0,7.0
 131,LICA,LIRN,2.0,Regional Turboprop,72.0,0.0
 132,LICA,LIBP,1.0,Regional Turboprop,36.0,0.0
 133,LICA,LICC,2.0,Regional Turboprop,69.0,0.0

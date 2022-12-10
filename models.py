@@ -106,7 +106,6 @@ class LegBasedModel:
                     self.rwy[i, k] = 1
                 else:
                     self.rwy[i, k] = 0
-        print(self.rwy)
 
     def plot_routes(self, routes):
         airport_data = self.parameter_set.airport_data
