@@ -29,7 +29,6 @@ bi_flights = pd.DataFrame(np.array(return_ranges), np.array(return_routes), colu
 
 # Create DataFrame with triangular flights from hub
 
-#TBD
 
 
 
