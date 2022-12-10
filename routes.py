@@ -28,8 +28,10 @@ for _ in airports:
 bi_flights = pd.DataFrame(np.array(return_ranges), np.array(return_routes), columns=['range'])
 
 # Create DataFrame with triangular flights from hub
-
-
-
-
-
+for i in distances:
+    for j in distances:
+        if j == i or i == 'LIRA' or j == 'LIRA':
+            continue
+        dist_1 = distances['LIRA'][i]
+        dist_2 = distances[i][j]
+        dist_3 = distances[j]['LIRA']
