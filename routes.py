@@ -42,7 +42,6 @@ for i in distances:
         tri_routes.append(['LIRA', i , j , 'LIRA'])
         tri_ranges.append(dist_total)
 
-
 # Create DataFrame with triangular flights from hub
 tri_flights = pd.DataFrame()
 tri_flights['route'] = tri_routes
@@ -67,10 +66,34 @@ routes['ICAOs'] = ICAOs
 pairs = []
 for route in routes['ICAOs']:
     pairs.append(od_markets(route))
-
-# Implement routes in routes DataFrame
 routes['pairs'] = pairs
 
-#print(od_markets(['LIRA', 'LIBD', 'LIPQ']))
+# Drop first row consisting of just [LIRA, LIRA, LIRA]
+routes = routes.iloc[1:, :]
+
+# Dictionary implementation functions
+def subsequent_nodes(route):
+    d_sub = {}
+    for _ in range(len(route)-1):
+        d_sub[route[_]] = route[_+1:len(route)]
+    return d_sub
+
+def precedent_nodes(route):
+    d_pre = {}
+    for _ in range(len(route)-1):
+        d_pre[route[_]] = route[_+1:len(route)]
+    return d_pre
+
+# Subsequent nodes
+sub_dicts = []
+for route in routes['route']:
+    sub_dicts.append(subsequent_nodes(route))
+routes['subsequent'] = sub_dicts
+
+# Precedent nodes
+pre_dicts = []
+for route in routes['route']:
+    pre_dicts.append(precedent_nodes(route))
+routes['precedent'] = pre_dicts
 
 print(routes)
