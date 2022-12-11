@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import itertools
 
+pd.set_option("display.max_columns", None)
+
 # Initialize lists
 return_routes = []
 return_ranges = []
@@ -81,7 +83,7 @@ def subsequent_nodes(route):
 def precedent_nodes(route):
     d_pre = {}
     for _ in range(len(route)-1):
-        d_pre[route[_]] = route[_+1:len(route)]
+        d_pre[route[_]] = route[:_+1]
     return d_pre
 
 # Subsequent nodes
