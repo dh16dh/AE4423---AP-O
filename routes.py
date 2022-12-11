@@ -17,15 +17,17 @@ aircraft_ranges = parameters.Range
 distances = parameters.distance_matrix
 airports = list(distances.index)
 
-# Compute return distances from hub
-for _ in distances['LIRA']:
-    return_ranges.append(_*2)
-
+# Compute return distances and routes from return fligths from hub
 for _ in airports:
     return_routes.append(['LIRA', _, 'LIRA'])
 
+for _ in distances['LIRA']:
+    return_ranges.append(_*2)
+
 # Create DataFrame with return flights from hub
-bi_flights = pd.DataFrame(np.array(return_ranges), np.array(return_routes), columns=['range'])
+return_flights = pd.DataFrame()
+return_flights['route'] = return_routes
+return_flights['range'] = return_ranges
 
 # Create DataFrame with triangular flights from hub
 for i in distances:
@@ -35,3 +37,18 @@ for i in distances:
         dist_1 = distances['LIRA'][i]
         dist_2 = distances[i][j]
         dist_3 = distances[j]['LIRA']
+        dist_total = dist_1 + dist_2 + dist_3
+        tri_routes.append(['LIRA', i , j , 'LIRA'])
+        tri_ranges.append(dist_total)
+
+
+# Create DataFrame with triangular flights from hub
+tri_flights = pd.DataFrame()
+tri_flights['route'] = tri_routes
+tri_flights['range'] = tri_ranges
+
+# Concat return and triangular DataFrames
+frames = [return_flights, tri_flights]
+routes = pd.concat(frames)
+
+print(routes)
