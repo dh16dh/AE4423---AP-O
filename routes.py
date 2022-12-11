@@ -2,6 +2,7 @@
 from models import Parameters
 import numpy as np
 import pandas as pd
+import itertools
 
 # Initialize lists
 return_routes = []
@@ -50,5 +51,18 @@ tri_flights['range'] = tri_ranges
 # Concat return and triangular DataFrames
 frames = [return_flights, tri_flights]
 routes = pd.concat(frames)
+
+# Create unique pairs from list of airports
+def od_markets(route):
+    l = list(itertools.combinations(route, 2))
+    return l
+
+# Individual pairs
+pairs = []
+for route in routes['route']:
+    pairs.append(od_markets(routes['route']))
+
+# Implement routes in routes DataFrame
+routes['pairs'] = pairs
 
 print(routes)
