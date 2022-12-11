@@ -54,15 +54,23 @@ routes = pd.concat(frames)
 
 # Create unique pairs from list of airports
 def od_markets(route):
-    l = list(itertools.combinations(route, 2))
+    l = list(itertools.permutations(route, 2))
     return l
+
+# Set of ICAO
+ICAOs = []
+for i in routes['route']:
+    ICAOs.append(set(i))
+routes['ICAOs'] = ICAOs
 
 # Individual pairs
 pairs = []
-for route in routes['route']:
-    pairs.append(od_markets(routes['route']))
+for route in routes['ICAOs']:
+    pairs.append(od_markets(route))
 
 # Implement routes in routes DataFrame
 routes['pairs'] = pairs
+
+#print(od_markets(['LIRA', 'LIBD', 'LIPQ']))
 
 print(routes)
