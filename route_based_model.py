@@ -160,7 +160,7 @@ class RouteBasedModel:
             model.addConstr(quicksum(x[i, m, r] for m in self.S) + quicksum(x[m, j, i, r] for m in self.P) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.P for m in self.S))) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.N for m in self.S))) <= quicksum(z[r, k] * self.s[k] * self.LF), name='C5')
 
             for k in self.K:
-                model.addConstr(z[r, k] * (routes['range'][r] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j]))) <= self.BT[k] * 7 * AC[k], name='C6')
+                model.addConstr(quicksum(z[r, k] * (routes['range'][r] / self.sp[k] + self.LTO[k] * routes['TATfactor'] + self.chargetime[k]) for r in self.R) <= self.BT[k] * 7 * AC[k], name='C6')
         for i in self.N:
             for j in self.N:
                 for k in self.K:
