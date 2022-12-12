@@ -34,7 +34,6 @@ return_flights = pd.DataFrame()
 return_flights['route'] = return_routes
 return_flights['range'] = return_ranges
 
-
 # Return route yield
 def calc_yield(route):
     return parameters.yield_matrix[route[0]][route[1]]*2
