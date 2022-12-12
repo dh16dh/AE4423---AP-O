@@ -12,6 +12,7 @@ from demand_forecast import DemandForecast
 
 from routes import routes
 
+
 class Parameters:
 
     def __init__(self, aircraft_data='Groups_data/Aircraft_info.csv',
@@ -53,6 +54,7 @@ class Parameters:
         self.energy_cost = self.energy_price * self.aircraft_data['Energy_c'] / self.aircraft_data[
             'Range']  # Needs to be multiplied by d_{ij}
 
+
 class RouteBasedModel:
     def __init__(self):
         self.parameter_set = Parameters()
@@ -85,7 +87,7 @@ class RouteBasedModel:
         self.BT = self.parameter_set.BT  # k
         self.Range = self.parameter_set.Range
         self.AP_rwy = self.parameter_set.AP_rwy  # i/j
-        self.AC_rwy = self.parameter_set.AC_rwy   # k
+        self.AC_rwy = self.parameter_set.AC_rwy  # k
 
         # Create binary matrix for range constraint
         self.a = {}
@@ -96,13 +98,13 @@ class RouteBasedModel:
                 else:
                     self.a[r, k] = 0
 
-       # for i in self.N:
-       #     for j in self.N:
-       #         for k in self.K:
-       #             if self.d[i][j] < self.Range[k]:
-       #                 self.a[i, j, k] = 1
-       #             else:
-       #                 self.a[i, j, k] = 0
+        # for i in self.N:
+        #     for j in self.N:
+        #         for k in self.K:
+        #             if self.d[i][j] < self.Range[k]:
+        #                 self.a[i, j, k] = 1
+        #             else:
+        #                 self.a[i, j, k] = 0
 
         # Create binary matrix for runway constraint
         self.rwy = {}
@@ -132,7 +134,8 @@ class RouteBasedModel:
                     for k in self.K:
                         z[i, j, k] = model.addVar(
                             obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (1 - self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
-                                                                                         (self.C_Tk[k] + self.C_Fk[k]))),
+                                                                                         (self.C_Tk[k] + self.C_Fk[
+                                                                                             k]))),
                             lb=0, vtype=GRB.INTEGER)
         for k in self.K:
             AC[k] = model.addVar(obj=-self.C_Lk[k], lb=0, vtype=GRB.INTEGER)
@@ -141,23 +144,26 @@ class RouteBasedModel:
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
 
         # Define Constraints
-        for i in self.N:
-            for j in self.N:
-                model.addConstr(x[i, j] + w[i, j] <= self.q[i][j], name='C1')
-                model.addConstr(w[i, j] <= self.q[i][j] * self.g[i] * self.g[j], name='C1*')
-                model.addConstr(x[i, j] + quicksum(w[i, m] * (1 - self.g[j]) for m in self.N) +
-                                quicksum(w[m, j] * (1 - self.g[i]) for m in self.N) <=
-                                quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
+        for r in self.R:
+            for i in self.N:
+                for j in self.N:
+                    model.addConstr(quicksum(x[i, j, r] + quicksum(w[i, j, r, n] for n in self.R) for r in self.R) <= self.q[i][j],
+                                    name='C1')
+                    model.addConstr(w[i, j, r] <= self.q[i][j] * self.g[i] * self.g[j], name='C1*')
+                    model.addConstr(x[i, j, r] + quicksum(w[i, m] * (1 - self.g[j]) for m in self.N) +
+                                    quicksum(w[m, j] * (1 - self.g[i]) for m in self.N) <=
+                                    quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
+
+            model.addConstr(quicksum(x[h, m, r] for m in self.S) + quicksum(quicksum(quicksum(w[p, m, r, n] for m in self.S for p in self.N for n in self.R))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name = 'C3')
+            model.addConstr(quicksum(x[m, h, r] for m in self.P) + quicksum(quicksum(quicksum(w[m, p, r, n] for n in self.R for m in self.P for p in self.N))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C4'))
+            model.addConstr(quicksum(x[i, m, r] for m in self.S) + quicksum(x[m, j, i, r] for m in self.P) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.P for m in self.S))) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.N for m in self.S))) <= quicksum(z[r, k] * self.s[k] * self.LF), name='C5')
+
             for k in self.K:
-                model.addConstr(quicksum(z[i, j, k] for j in self.N) == quicksum(z[j, i, k] for j in self.N), name='C3')
-        for k in self.K:
-            model.addConstr(quicksum(quicksum(
-                z[i, j, k] * (self.d[i][j] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j]))) for j in self.N)
-                                     for i in self.N) <= self.BT[k] * 7 * AC[k], name='C4')
+                model.addConstr(z[r, k] * (routes['range'][r] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j]))) <= self.BT[k] * 7 * AC[k], name='C6')
         for i in self.N:
             for j in self.N:
                 for k in self.K:
-                    model.addConstr(z[i, j, k] <= self.a[r, k] * 999, name='C5')
+                    model.addConstr(z[i, j, k] <= self.a[r, k] * 999, name='C7')
                     model.addConstr(z[i, j, k] <= self.rwy[i, k] * self.rwy[j, k] * 999, name='RWY')
 
         model.update()
