@@ -1,5 +1,5 @@
 # Import relevant modules
-from models import Parameters
+from leg_based_model import Parameters
 import numpy as np
 import pandas as pd
 import itertools
