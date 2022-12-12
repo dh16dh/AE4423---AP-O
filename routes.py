@@ -119,4 +119,3 @@ for route in routes['route']:
     pre_dicts.append(precedent_nodes(route))
 routes['precedent'] = pre_dicts
 
-#print(routes)
