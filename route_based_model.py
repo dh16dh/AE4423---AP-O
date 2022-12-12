@@ -117,6 +117,7 @@ class RouteBasedModel:
 
     def network_fleet_model(self):
 
+        global self
         model = Model("NFM")
 
         # Define Decision Variables
@@ -129,10 +130,10 @@ class RouteBasedModel:
         for r in R:
             for i in self.N:
                 for j in self.N:
-                    x[i, j, r] = model.addVar(obj=self.Yield[i][j] * self.d[i][j], lb=0, vtype=GRB.INTEGER)
-                    w[i, j, r] = model.addVar(obj=self.Yield[i][j] * self.d[i][j] * 0.9, lb=0, vtype=GRB.INTEGER)
+                    x[i, j, r] = model.addVar(obj=routes['yield'][r] * routes['range'][r], lb=0, vtype=GRB.INTEGER)
+                    w[i, j, r] = model.addVar(obj=routes['yield'][r] * routes['range'][r] * 0.9, lb=0, vtype=GRB.INTEGER)
                     for k in self.K:
-                        z[i, j, k] = model.addVar(
+                        z[r, k] = model.addVar(
                             obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (1 - self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
                                                                                          (self.C_Tk[k] + self.C_Fk[
                                                                                              k]))),
@@ -155,7 +156,7 @@ class RouteBasedModel:
                                     quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
 
             model.addConstr(quicksum(x[h, m, r] for m in self.S) + quicksum(quicksum(quicksum(w[p, m, r, n] for m in self.S for p in self.N for n in self.R))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name = 'C3')
-            model.addConstr(quicksum(x[m, h, r] for m in self.P) + quicksum(quicksum(quicksum(w[m, p, r, n] for n in self.R for m in self.P for p in self.N))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C4'))
+            model.addConstr(quicksum(x[m, h, r] for m in self.P) + quicksum(quicksum(quicksum(w[m, p, r, n] for n in self.R for m in self.P for p in self.N))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C4')
             model.addConstr(quicksum(x[i, m, r] for m in self.S) + quicksum(x[m, j, i, r] for m in self.P) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.P for m in self.S))) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.N for m in self.S))) <= quicksum(z[r, k] * self.s[k] * self.LF), name='C5')
 
             for k in self.K:
@@ -163,8 +164,8 @@ class RouteBasedModel:
         for i in self.N:
             for j in self.N:
                 for k in self.K:
-                    model.addConstr(z[i, j, k] <= self.a[r, k] * 999, name='C7')
-                    model.addConstr(z[i, j, k] <= self.rwy[i, k] * self.rwy[j, k] * 999, name='RWY')
+                    model.addConstr(z[r, k] <= self.a[r, k] * 999, name='C7')
+                    model.addConstr(z[r, k] <= self.rwy[i, k] * self.rwy[j, k] * 999, name='RWY')
 
         model.update()
 
@@ -187,15 +188,15 @@ class RouteBasedModel:
         for i in self.N:
             for j in self.N:
                 for k in self.K:
-                    if z[i, j, k].X > 0:
-                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w[i, j].X]],
+                    if z[r, k].X > 0:
+                        new_row = pd.DataFrame([[i, j, z[r, k].X, k, x[i, j, r].X, w[i, j, r].X]],
                                                columns=['Origin', 'Destination', 'Frequency', 'AC Type',
                                                         'Direct Flow', 'Transfer Flow'])
                         result = pd.concat([result, new_row], ignore_index=True)
         for i in self.N:
             for j in self.N:
-                if w[i, j].X > 0:
-                    new_row = pd.DataFrame([[i, j, np.NaN, np.NaN, x[i, j].X, w[i, j].X]],
+                if w[i, j, r].X > 0:
+                    new_row = pd.DataFrame([[i, j, np.NaN, np.NaN, x[i, j, r].X, w[i, j, r].X]],
                                            columns=['Origin', 'Destination', 'Frequency', 'AC Type',
                                                     'Direct Flow', 'Transfer Flow'])
                     # result = pd.concat([result, new_row], ignore_index=True)
@@ -204,3 +205,18 @@ class RouteBasedModel:
             print('Leasing', k, ':', AC[k].X)
 
         return result
+
+if __name__ == '__main__':
+    aircraft_path = 'Groups_data/Aircraft_info.csv'
+    airport_path = "Groups_data/Group_17_Airport_info.csv"
+    demand_path = "Groups_data/Group_17_Demand.csv"
+    distance_path = "Groups_data/Group_17_Distances.csv"
+    annual_growth_path = "Groups_data/Group_17_Annual_growth.csv"
+
+    parameters = Parameters()
+    model2 = RouteBasedModel()
+
+    final_result = model2.network_fleet_model()
+    final_result.to_csv('Route-Based Results.csv')
+    # route_csv = pd.read_csv('Leg-Based Results.csv')
+    model2.plot_routes(final_result)
