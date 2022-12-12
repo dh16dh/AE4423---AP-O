@@ -118,3 +118,16 @@ for route in routes['route']:
     pre_dicts.append(precedent_nodes(route))
 routes['precedent'] = pre_dicts
 
+# TAT factor
+def tat_factor(route):
+    if len(route) == 3:
+        return 2.5
+    else:
+        return 3.5
+
+tat_fac = []
+for route in routes['route']:
+    tat_fac.append(tat_factor(route))
+routes['tatfactor'] = tat_fac
+
+print(routes)
