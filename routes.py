@@ -11,6 +11,8 @@ return_routes = []
 return_ranges = []
 tri_routes = []
 tri_ranges = []
+return_yield = []
+tri_yield = []
 
 # Set parameters from Parameters class
 parameters = Parameters()
@@ -25,12 +27,22 @@ for _ in airports:
     return_routes.append(['LIRA', _, 'LIRA'])
 
 for _ in distances['LIRA']:
-    return_ranges.append(_*2)
+    return_ranges.append(_*2)  
 
 # Create DataFrame with return flights from hub
 return_flights = pd.DataFrame()
 return_flights['route'] = return_routes
 return_flights['range'] = return_ranges
+
+
+# Return route yield
+def calc_yield(route):
+    return parameters.yield_matrix[route[0]][route[1]]*2
+
+for _ in return_flights['route']:
+    return_yield.append(calc_yield(_))
+
+return_flights['yield'] = return_yield
 
 # Create DataFrame with triangular flights from hub
 for i in distances:
@@ -48,6 +60,15 @@ for i in distances:
 tri_flights = pd.DataFrame()
 tri_flights['route'] = tri_routes
 tri_flights['range'] = tri_ranges
+
+# Return triangular yield
+def calc_yield(route):
+    return parameters.yield_matrix[route[0]][route[1]] + parameters.yield_matrix[route[1]][route[2]] + parameters.yield_matrix[route[2]][route[3]]
+
+for _ in tri_flights['route']:
+    tri_yield.append(calc_yield(_))
+
+tri_flights['yield'] = tri_yield
 
 # Concat return and triangular DataFrames
 frames = [return_flights, tri_flights]
@@ -98,4 +119,4 @@ for route in routes['route']:
     pre_dicts.append(precedent_nodes(route))
 routes['precedent'] = pre_dicts
 
-print(routes)
+#print(routes)
