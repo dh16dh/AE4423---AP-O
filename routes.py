@@ -11,11 +11,13 @@ return_routes = []
 return_ranges = []
 tri_routes = []
 tri_ranges = []
-return_yield = []
-tri_yield = []
 
 # Set parameters from Parameters class
 parameters = Parameters()
+fixed_operating_costs = parameters.operating_cost
+time_based_costs = parameters.time_cost
+fuel_cost = parameters.fuel_cost
+energy_cost = parameters.energy_cost
 
 # Get aircraft ranges and airport distance matrix
 aircraft_ranges = parameters.Range
@@ -34,14 +36,14 @@ return_flights = pd.DataFrame()
 return_flights['route'] = return_routes
 return_flights['range'] = return_ranges
 
-# Return route yield
-def calc_yield(route):
-    return parameters.yield_matrix[route[0]][route[1]]*2
+# Return routes costs
+return_operatingcosts = []
+for index, row in return_flights.iterrows():
+    x = 0.7 * ((fixed_operating_costs*2) + (time_based_costs + fuel_cost + energy_cost) * row['range'])
+    y = x.to_dict()
+    return_operatingcosts.append(y)
 
-for _ in return_flights['route']:
-    return_yield.append(calc_yield(_))
-
-return_flights['yield'] = return_yield
+return_flights['operatingcosts'] = return_operatingcosts
 
 # Create DataFrame with triangular flights from hub
 for i in distances:
@@ -60,14 +62,18 @@ tri_flights = pd.DataFrame()
 tri_flights['route'] = tri_routes
 tri_flights['range'] = tri_ranges
 
-# Return triangular yield
-def calc_yield(route):
-    return parameters.yield_matrix[route[0]][route[1]] + parameters.yield_matrix[route[1]][route[2]] + parameters.yield_matrix[route[2]][route[3]]
+# Triangular routes costs
+tri_operatingcosts = []
+for index, row in tri_flights.iterrows():
+    disth1 = float(parameters.distance_matrix[row['route'][0]][[row['route'][1]]])
+    dist12 = float(parameters.distance_matrix[row['route'][1]][[row['route'][2]]])
+    dist2h = float(parameters.distance_matrix[row['route'][2]][[row['route'][3]]])
+    x = fixed_operating_costs + (time_based_costs + fuel_cost + energy_cost)*dist12
+    y = (0.7*((fixed_operating_costs*2) + (time_based_costs + fuel_cost)*(disth1 + dist2h))) + energy_cost*(disth1 + dist2h)
+    z = x + y
+    tri_operatingcosts.append(z.to_dict())
 
-for _ in tri_flights['route']:
-    tri_yield.append(calc_yield(_))
-
-tri_flights['yield'] = tri_yield
+tri_flights['operatingcosts'] = tri_operatingcosts
 
 # Concat return and triangular DataFrames
 frames = [return_flights, tri_flights]

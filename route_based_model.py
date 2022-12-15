@@ -86,11 +86,12 @@ class RouteBasedModel:
         AC = {}
 
         # Add Variables to Objective Function
-        for r in self.R:
+        for r in self.Rid:
             for i in self.N:
                 for j in self.N:
-                    x[i, j, r] = model.addVar(obj=routes['yield'][r] * routes['range'][r], lb=0, vtype=GRB.INTEGER)
-                    w[i, j, r] = model.addVar(obj=routes['yield'][r] * routes['range'][r] * 0.9, lb=0, vtype=GRB.INTEGER)
+                    x[i, j, r] = model.addVar(obj=routes['yield'][r] * self.d[i][j], lb=0, vtype=GRB.INTEGER)
+                    for n in self.Rid:
+                        w[i, j, r] = model.addVar(obj=routes['yield'][r] * self.d[i][j] * 0.9, lb=0, vtype=GRB.INTEGER)
                     for k in self.K:
                         z[r, k] = model.addVar(
                             obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (1 - self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
@@ -104,7 +105,7 @@ class RouteBasedModel:
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
 
         # Define Constraints
-        for r in self.R:
+        for r in self.Rid:
             for i in self.N:
                 for j in self.N:
                     model.addConstr(quicksum(x[i, j, r] + quicksum(w[i, j, r, n] for n in self.R) for r in self.R) <= self.q[i][j],
