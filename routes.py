@@ -83,7 +83,8 @@ routes = routes.drop(['index'], axis=1)
 
 # Create unique pairs from list of airports
 def od_markets(route):
-    l = list(itertools.permutations(route, 2))
+    l = list(itertools.combinations(route, 2))
+    l.remove(('LIRA', 'LIRA'))
     return l
 
 # Set of ICAO
@@ -94,7 +95,7 @@ routes['ICAOs'] = ICAOs
 
 # Individual pairs
 pairs = []
-for route in routes['ICAOs']:
+for route in routes['route']:
     pairs.append(od_markets(route))
 routes['pairs'] = pairs
 
@@ -151,5 +152,5 @@ for route in routes['route']:
 
 routes['minrwy'] = min_run
 
-print(routes['pairs'])
+print(routes['pairs'][196])
 
