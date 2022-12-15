@@ -46,9 +46,7 @@ class RouteBasedModel:
 
         # Create binary matrix for range constraint
         self.a = {}
-        for r in self.index:
-            print(r)
-            print(self.RouteRange[r])
+        for r in self.Rid:
             for k in self.K:
                 if self.RouteRange[r] < self.Range[k]:
                     self.a[r, k] = 1
@@ -56,7 +54,7 @@ class RouteBasedModel:
                     self.a[r, k] = 0
 
         self.delta = {}
-        for r in self.R:
+        for r in self.Rid:
             for i in self.N:
                 for j in self.N:
                     if (i, j) in self.Pairs[r]:
