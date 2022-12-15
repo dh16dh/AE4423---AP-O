@@ -131,4 +131,17 @@ for route in routes['route']:
     tat_fac.append(tat_factor(route))
 routes['tatfactor'] = tat_fac
 
+# Limiting runway length
+def limit_runway(route):
+    run_lengths = []
+    for airport in route:
+        run_lengths.append(parameters.AP_rwy[airport])
+    return min(run_lengths)
+
+min_run = []
+for route in routes['route']:
+    min_run.append(limit_runway(route))
+
+routes['minrwy'] = min_run
+
 print(routes)

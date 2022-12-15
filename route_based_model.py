@@ -18,7 +18,7 @@ class RouteBasedModel:
         self.K = self.parameter_set.aircraft_data.index.to_list()
         self.R = routes['route']
         print(self.R)
-        self.index = routes.index.to_list()
+        self.Rid = routes.index.to_list()
         self.S = routes['subsequent']
         self.P = routes['precedent']
         self.Pairs = routes['pairs']
@@ -57,7 +57,7 @@ class RouteBasedModel:
                     self.a[r, k] = 0
 
         self.delta = {}
-        for r in self.R:
+        for r in self.Rid:
             for i in self.N:
                 for j in self.N:
                     if (i, j) in self.Pairs[r]:
@@ -88,7 +88,7 @@ class RouteBasedModel:
         AC = {}
 
         # Add Variables to Objective Function
-        for r in self.R:
+        for r in self.Rid:
             for i in self.N:
                 for j in self.N:
                     x[i, j, r] = model.addVar(obj=routes['yield'][r] * routes['range'][r], lb=0, vtype=GRB.INTEGER)
@@ -106,7 +106,7 @@ class RouteBasedModel:
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
 
         # Define Constraints
-        for r in self.R:
+        for r in self.Rid:
             for i in self.N:
                 for j in self.N:
                     model.addConstr(quicksum(x[i, j, r] + quicksum(w[i, j, r, n] for n in self.R) for r in self.R) <= self.q[i][j],
