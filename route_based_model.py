@@ -3,56 +3,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from gurobipy import Model, GRB, LinExpr, quicksum
 from demand_forecast import DemandForecast
-
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-from gurobipy import Model, GRB, LinExpr, quicksum
-from demand_forecast import DemandForecast
-
+from leg_based_model import Parameters
 from routes import routes
-
-
-class Parameters:
-
-    def __init__(self, aircraft_data='Groups_data/Aircraft_info.csv',
-                 airport_data="Groups_data/Group_17_Airport_info.csv",
-                 demand_data="Groups_data/Group_17_Demand.csv",
-                 distance_data="Groups_data/Group_17_Distances.csv",
-                 annual_growth="Groups_data/Group_17_Annual_growth.csv"):
-        self.aircraft_data = pd.read_csv(aircraft_data, index_col=0)
-        self.airport_data = pd.read_csv(airport_data, index_col=1)
-
-        forecast_model = DemandForecast(airport_data, demand_data, distance_data, annual_growth)
-        forecast_model.calibrate()
-
-        zero_list = list(1 for i in range(len(self.airport_data)))
-        zero_list[0] = 0
-        bt_list = list(10 for i in range(len(self.aircraft_data)))
-
-        self.fuel_cost_usdgal = 1.42
-        self.demand_matrix = forecast_model.forecast_demand()
-        self.g_values = pd.Series(zero_list, index=self.airport_data.index, name='g value')
-        self.distance_matrix = pd.read_csv(distance_data, index_col=0)
-        self.yield_matrix = 5.9 * self.distance_matrix ** -0.76 + 0.043
-        self.seat_list = self.aircraft_data['Seats']
-        self.speed_list = self.aircraft_data['Speed']
-        self.LF = 0.8
-        self.TAT = self.aircraft_data['TAT'] / 60
-        self.ChargeTime = self.aircraft_data['Charging'] / 60
-        self.BT = pd.Series(bt_list, name='Block Time', index=self.aircraft_data.index)
-        self.Range = self.aircraft_data['Range']
-        self.AP_rwy = self.airport_data['Runway (m)']
-        self.AC_rwy = self.aircraft_data['Runway']
-
-        self.lease_cost = self.aircraft_data['Lease_c']  # Needs to be multiplied by AC^k (weekly cost per aircraft)
-        self.operating_cost = self.aircraft_data['Operating_c']  # Needs to be multiplied by z_{ij} (per flight leg)
-        self.time_cost = self.aircraft_data['Time_c'] / self.aircraft_data['Speed']  # Needs to be multiplied by d_{ij}
-        self.fuel_cost = self.aircraft_data['Fuel_c'] * self.fuel_cost_usdgal / 1.5  # Needs to be multiplied by d_{ij}
-
-        self.energy_price = 0.07  # Wh/eur
-        self.energy_cost = self.energy_price * self.aircraft_data['Energy_c'] / self.aircraft_data[
-            'Range']  # Needs to be multiplied by d_{ij}
 
 
 class RouteBasedModel:
@@ -64,10 +16,13 @@ class RouteBasedModel:
         # Define Sets
         self.N = self.parameter_set.airport_data.index.to_list()
         self.K = self.parameter_set.aircraft_data.index.to_list()
-        self.R = routes.index.to_list()
+        self.R = routes['route']
+        print(self.R)
+        self.index = routes.index.to_list()
         self.S = routes['subsequent']
         self.P = routes['precedent']
         self.Pairs = routes['pairs']
+        self.RouteRange = routes['range']
 
         # Define Revenue Parameters
         self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
@@ -92,9 +47,11 @@ class RouteBasedModel:
 
         # Create binary matrix for range constraint
         self.a = {}
-        for r in self.R:
+        for r in self.index:
+            print(r)
+            print(self.RouteRange[r])
             for k in self.K:
-                if routes['range'][r] < self.Range[k]:
+                if self.RouteRange[r] < self.Range[k]:
                     self.a[r, k] = 1
                 else:
                     self.a[r, k] = 0

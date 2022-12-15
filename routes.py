@@ -71,7 +71,8 @@ tri_flights['yield'] = tri_yield
 
 # Concat return and triangular DataFrames
 frames = [return_flights, tri_flights]
-routes = pd.concat(frames)
+routes = pd.concat(frames).reset_index()
+routes = routes.drop(['index'], axis=1)
 
 # Create unique pairs from list of airports
 def od_markets(route):
@@ -91,7 +92,7 @@ for route in routes['ICAOs']:
 routes['pairs'] = pairs
 
 # Drop first row consisting of just [LIRA, LIRA, LIRA]
-routes = routes.iloc[1:, :]
+routes = routes.drop(0)
 
 # Dictionary implementation functions
 def subsequent_nodes(route):
@@ -129,7 +130,5 @@ tat_fac = []
 for route in routes['route']:
     tat_fac.append(tat_factor(route))
 routes['tatfactor'] = tat_fac
-
-routes.set_index('route', inplace=True)
 
 print(routes)
