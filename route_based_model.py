@@ -16,9 +16,10 @@ class RouteBasedModel:
         # Define Sets
         self.N = self.parameter_set.airport_data.index.to_list()
         self.K = self.parameter_set.aircraft_data.index.to_list()
-        self.R = routes['route']
-        self.Rid = routes.index.to_list()
-        self.S = routes['subsequent']
+        self.Route = routes['route']
+        self.R = routes.index.to_list()
+        self.R2 = self.R[14::]
+        self.S = routes['subsequent']  # r, H,
         self.P = routes['precedent']
         self.Pairs = routes['pairs']
         self.RouteRange = routes['range']
@@ -30,6 +31,7 @@ class RouteBasedModel:
         self.d = self.parameter_set.distance_matrix  # ij
         # Define Cost Parameters
         self.Cost = routes['operatingcosts']  # r, k
+        self.Cost_Lease = self.parameter_set.lease_cost
 
         # Define Constraint Parameters
         self.q = self.parameter_set.demand_matrix  # ij
@@ -45,7 +47,7 @@ class RouteBasedModel:
 
         # Create binary matrix for range constraint
         self.a = {}
-        for r in self.Rid:
+        for r in self.R:
             for k in self.K:
                 if self.RouteRange[r] < self.Range[k]:
                     self.a[r, k] = 1
@@ -53,7 +55,7 @@ class RouteBasedModel:
                     self.a[r, k] = 0
 
         self.delta = {}
-        for r in self.Rid:
+        for r in self.R:
             for i in self.ICAOList[r]:
                 for j in self.ICAOList[r]:
                     if (i, j) in self.Pairs[r]:
@@ -63,7 +65,7 @@ class RouteBasedModel:
 
         # Create binary matrix for runway constraint
         self.rwy = {}
-        for r in self.Rid:
+        for r in self.R:
             for k in self.K:
                 if self.AC_rwy[k] <= self.RouteMinRwy[r]:
                     self.rwy[r, k] = 1
@@ -82,34 +84,37 @@ class RouteBasedModel:
         AC = {}
 
         # Add Variables to Objective Function
-        for r in self.Rid:
+        for r in self.R:
             for i in self.N:
                 for j in self.N:
-                    x[i, j, r] = model.addVar(obj=routes['yield'][r] * self.d[i][j], lb=0, vtype=GRB.INTEGER)
-                    for n in self.Rid:
-                        w[i, j, r] = model.addVar(obj=routes['yield'][r] * self.d[i][j] * 0.9, lb=0, vtype=GRB.INTEGER)
-                    for k in self.K:
-                        z[r, k] = model.addVar(
-                            obj=-((1 - 0.3 * (1 - self.g[i]) - 0.3 * (1 - self.g[j])) * (self.C_Xk[k] + self.d[i][j] *
-                                                                                         (self.C_Tk[k] + self.C_Fk[
-                                                                                             k]))),
-                            lb=0, vtype=GRB.INTEGER)
+                    x[i, j, r] = model.addVar(obj=self.Yield[i][j] * self.d[i][j], lb=0, vtype=GRB.INTEGER)
+                    for n in self.R:
+                        w[i, j, r, n] = model.addVar(obj=self.Yield[i][j] * self.d[i][j] * 0.9, lb=0, vtype=GRB.INTEGER)
+            for k in self.K:
+                z[r, k] = model.addVar(obj=-self.Cost[r][k], lb=0, vtype=GRB.INTEGER)
         for k in self.K:
-            AC[k] = model.addVar(obj=-self.C_Lk[k], lb=0, vtype=GRB.INTEGER)
+            AC[k] = model.addVar(obj=-self.Cost_Lease[k], lb=0, vtype=GRB.INTEGER)
             # Currently adding number of aircraft as DV but not part of OF
         model.update()
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
 
         # Define Constraints
-        for r in self.Rid:
-            for i in self.N:
-                for j in self.N:
-                    model.addConstr(quicksum(x[i, j, r] + quicksum(w[i, j, r, n] for n in self.R) for r in self.R) <= self.q[i][j],
-                                    name='C1')
-                    model.addConstr(w[i, j, r] <= self.q[i][j] * self.g[i] * self.g[j], name='C1*')
-                    model.addConstr(x[i, j, r] + quicksum(w[i, m] * (1 - self.g[j]) for m in self.N) +
-                                    quicksum(w[m, j] * (1 - self.g[i]) for m in self.N) <=
-                                    quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
+        for i in self.N:
+            for j in self.N:
+                model.addConstr(
+                    quicksum(x[i, j, r] + quicksum(w[i, j, r, n] for n in self.R) for r in self.R) <= self.q[i][j],
+                    name='C1')
+                for r in self.R:
+                    model.addConstr(x[i, j, r] <= self.q[i][j] * self.delta[i, j, r], name='C1*_1')
+                    for n in self.R:
+                        model.addConstr(w[i, j, r, n] <= self.q[i][j] * self.delta[i, 'LIRA', r] * self.delta['LIRA', j, n], name='C1*_2')
+        for r in self.R:
+            model.addConstr(quicksum(x['LIRA', m, r] for m in self.S[r]['LIRA']) + quicksum(quicksum(quicksum(w[p, m, n, r] for m in self.S[r]['LIRA']) for p in self.N) for n in self.R))
+
+            model.addConstr(w[i, j, r] <= self.q[i][j] * self.g[i] * self.g[j], name='C1*')
+            model.addConstr(x[i, j, r] + quicksum(w[i, m] * (1 - self.g[j]) for m in self.N) +
+                            quicksum(w[m, j] * (1 - self.g[i]) for m in self.N) <=
+                            quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
 
             model.addConstr(quicksum(x['LIRA', m, r] for m in self.S) + quicksum(quicksum(quicksum(w[p, m, r, n] for m in self.S for p in self.N for n in self.R))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name = 'C3')
             model.addConstr(quicksum(x[m, 'LIRA', r] for m in self.P) + quicksum(quicksum(quicksum(w[m, p, r, n] for n in self.R for m in self.P for p in self.N))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C4')
