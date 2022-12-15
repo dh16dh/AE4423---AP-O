@@ -151,5 +151,5 @@ for route in routes['route']:
 
 routes['minrwy'] = min_run
 
-print(routes)
+# print(routes)
 
