@@ -180,7 +180,6 @@ class LegBasedModel:
                         lb=0, vtype=GRB.INTEGER)
         for k in self.K:
             AC[k] = model.addVar(obj=-self.C_Lk[k], lb=0, vtype=GRB.INTEGER)
-            # Currently adding number of aircraft as DV but not part of OF
         model.update()
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
 

@@ -25,13 +25,14 @@ class RouteBasedModel:
         self.RouteRange = routes['range']
         self.ICAOList = routes['ICAOs']
         self.RouteMinRwy = routes['minrwy']
+        self.LTO_Route = routes['tatfactor']
 
         # Define Revenue Parameters
         self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
         self.d = self.parameter_set.distance_matrix  # ij
         # Define Cost Parameters
         self.Cost = routes['operatingcosts']  # r, k
-        self.Cost_Lease = self.parameter_set.lease_cost
+        self.Cost_Lease = self.parameter_set.lease_cost  # k
 
         # Define Constraint Parameters
         self.q = self.parameter_set.demand_matrix  # ij
@@ -44,6 +45,7 @@ class RouteBasedModel:
         self.Range = self.parameter_set.Range
         self.AP_rwy = self.parameter_set.AP_rwy  # i/j
         self.AC_rwy = self.parameter_set.AC_rwy  # k
+        self.ChargeTime = self.parameter_set.ChargeTime  # k
 
         # Create binary matrix for range constraint
         self.a = {}
@@ -56,13 +58,12 @@ class RouteBasedModel:
 
         self.delta = {}
         for r in self.R:
-            for i in self.ICAOList[r]:
-                for j in self.ICAOList[r]:
+            for i in self.N:
+                for j in self.N:
                     if (i, j) in self.Pairs[r]:
                         self.delta[i, j, r] = 1
                     else:
                         self.delta[i, j, r] = 0
-
         # Create binary matrix for runway constraint
         self.rwy = {}
         for r in self.R:
@@ -74,7 +75,6 @@ class RouteBasedModel:
 
     def network_fleet_model(self):
 
-        #global self
         model = Model("NFM")
 
         # Define Decision Variables
@@ -94,7 +94,6 @@ class RouteBasedModel:
                 z[r, k] = model.addVar(obj=-self.Cost[r][k], lb=0, vtype=GRB.INTEGER)
         for k in self.K:
             AC[k] = model.addVar(obj=-self.Cost_Lease[k], lb=0, vtype=GRB.INTEGER)
-            # Currently adding number of aircraft as DV but not part of OF
         model.update()
         model.setObjective(model.getObjective(), GRB.MAXIMIZE)
 
@@ -109,24 +108,20 @@ class RouteBasedModel:
                     for n in self.R:
                         model.addConstr(w[i, j, r, n] <= self.q[i][j] * self.delta[i, 'LIRA', r] * self.delta['LIRA', j, n], name='C1*_2')
         for r in self.R:
-            model.addConstr(quicksum(x['LIRA', m, r] for m in self.S[r]['LIRA']) + quicksum(quicksum(quicksum(w[p, m, n, r] for m in self.S[r]['LIRA']) for p in self.N) for n in self.R))
-
-            model.addConstr(w[i, j, r] <= self.q[i][j] * self.g[i] * self.g[j], name='C1*')
-            model.addConstr(x[i, j, r] + quicksum(w[i, m] * (1 - self.g[j]) for m in self.N) +
-                            quicksum(w[m, j] * (1 - self.g[i]) for m in self.N) <=
-                            quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
-
-            model.addConstr(quicksum(x['LIRA', m, r] for m in self.S) + quicksum(quicksum(quicksum(w[p, m, r, n] for m in self.S for p in self.N for n in self.R))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name = 'C3')
-            model.addConstr(quicksum(x[m, 'LIRA', r] for m in self.P) + quicksum(quicksum(quicksum(w[m, p, r, n] for n in self.R for m in self.P for p in self.N))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C4')
-            model.addConstr(quicksum(x[i, m, r] for m in self.S) + quicksum(x[m, j, i, r] for m in self.P) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.P for m in self.S))) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.N for m in self.S))) <= quicksum(z[r, k] * self.s[k] * self.LF), name='C5')
-
+            model.addConstr(quicksum(x['LIRA', m, r] for m in self.S[r]['LIRA']) + quicksum(quicksum(quicksum(w[p, m, n, r] for m in self.S[r]['LIRA']) for p in self.N) for n in self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_Hm')
+        for r in self.R2:
+            i = self.S[r]['LIRA'][0]
+            j = self.S[r]['LIRA'][1]
+            model.addConstr(quicksum(x[i, m, r] for m in self.S[r][j]) + quicksum(x[m, j, r] for m in self.P[r][i]) + quicksum(quicksum(w[p, j, r, n] for p in self.N) for n in self.R) + quicksum(quicksum(w[i, p, r, n] for p in self.N) for n in self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_spokes')
+        for r in self.R:
+            i = self.S[r]['LIRA'][-2]
+            model.addConstr(quicksum(x[m, 'LIRA', r] for m in self.P[r][i]) + quicksum(quicksum(quicksum(w[m, p, r, n] for m in self.P[r][i]) for p in self.N) for n in self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_mH')
+        for k in self.K:
+            model.addConstr(quicksum((self.RouteRange[r] / self.sp[k] + self.LTO[k]*self.LTO_Route[r] + self.ChargeTime[k]) * z[r, k] for r in self.R) <= self.BT[k] * AC[k], name='C4')
+        for r in self.R:
             for k in self.K:
-                model.addConstr(quicksum(z[r, k] * (routes['range'][r] / self.sp[k] + self.LTO[k] * routes['TATfactor'] + self.chargetime[k]) for r in self.R) <= self.BT[k] * 7 * AC[k], name='C6')
-        for i in self.N:
-            for j in self.N:
-                for k in self.K:
-                    model.addConstr(z[r, k] <= self.a[r, k] * 999, name='C7')
-                    model.addConstr(z[r, k] <= self.rwy[i, k] * self.rwy[j, k] * 999, name='RWY')
+                model.addConstr(z[r, k] <= self.a[r, k] * 999, name='C7')
+                model.addConstr(z[r, k] <= self.rwy[r, k] * 999, name='RWY')
 
         model.update()
 
@@ -175,10 +170,8 @@ if __name__ == '__main__':
     annual_growth_path = "Groups_data/Group_17_Annual_growth.csv"
 
     parameters = Parameters()
-    model = RouteBasedModel()
+    route_model = RouteBasedModel()
 
-    final_result = model.network_fleet_model()
+    final_result = route_model.network_fleet_model()
     final_result.to_csv('Route-Based Results.csv')
     # route_csv = pd.read_csv('Leg-Based Results.csv')
-    model.plot_routes(final_result)
-    
