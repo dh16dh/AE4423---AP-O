@@ -117,7 +117,7 @@ class RouteBasedModel:
             i = self.S[r]['LIRA'][-2]
             model.addConstr(quicksum(x[m, 'LIRA', r] for m in self.P[r][i]) + quicksum(quicksum(quicksum(w[m, p, r, n] for m in self.P[r][i]) for p in self.N) for n in self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_mH')
         for k in self.K:
-            model.addConstr(quicksum((self.RouteRange[r] / self.sp[k] + self.LTO[k]*self.LTO_Route[r] + self.ChargeTime[k]) * z[r, k] for r in self.R) <= self.BT[k] * AC[k], name='C4')
+            model.addConstr(quicksum((self.RouteRange[r] / self.sp[k] + self.LTO[k]*self.LTO_Route[r] + self.ChargeTime[k]) * z[r, k] for r in self.R) <= 7 * self.BT[k] * AC[k], name='C4')
         for r in self.R:
             for k in self.K:
                 model.addConstr(z[r, k] <= self.a[r, k] * 999, name='C7')
@@ -143,19 +143,14 @@ class RouteBasedModel:
 
         for i in self.N:
             for j in self.N:
-                for k in self.K:
-                    if z[r, k].X > 0:
-                        new_row = pd.DataFrame([[i, j, z[r, k].X, k, x[i, j, r].X, w[i, j, r].X]],
-                                               columns=['Origin', 'Destination', 'Frequency', 'AC Type',
-                                                        'Direct Flow', 'Transfer Flow'])
-                        result = pd.concat([result, new_row], ignore_index=True)
-        for i in self.N:
-            for j in self.N:
-                if w[i, j, r].X > 0:
-                    new_row = pd.DataFrame([[i, j, np.NaN, np.NaN, x[i, j, r].X, w[i, j, r].X]],
-                                           columns=['Origin', 'Destination', 'Frequency', 'AC Type',
-                                                    'Direct Flow', 'Transfer Flow'])
-                    # result = pd.concat([result, new_row], ignore_index=True)
+                for r in self.R:
+                    for k in self.K:
+                        for n in self.R:
+                            if z[r, k].X > 0:
+                                new_row = pd.DataFrame([[i, j, r, z[r, k].X, k, x[i, j, r].X, w[i, j, r, n].X]],
+                                                   columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
+                                                            'Direct Flow', 'Transfer Flow'])
+                                result = pd.concat([result, new_row], ignore_index=True)
         print('Fleet')
         for k in self.K:
             print('Leasing', k, ':', AC[k].X)
