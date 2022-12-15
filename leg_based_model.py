@@ -16,6 +16,7 @@ import plotly.graph_objects as go
 from gurobipy import Model, GRB, LinExpr, quicksum
 from demand_forecast import DemandForecast
 
+
 class Parameters:
 
     def __init__(self, aircraft_data='Groups_data/Aircraft_info.csv',
@@ -87,7 +88,7 @@ class LegBasedModel:
         self.BT = self.parameter_set.BT  # k
         self.Range = self.parameter_set.Range
         self.AP_rwy = self.parameter_set.AP_rwy  # i/j
-        self.AC_rwy = self.parameter_set.AC_rwy   # k
+        self.AC_rwy = self.parameter_set.AC_rwy  # k
 
         # Create binary matrix for range constraint
         self.a = {}
@@ -221,24 +222,68 @@ class LegBasedModel:
 
         result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow', 'Transfer Flow'])
 
+        # Create List of Routes Flown
         for i in self.N:
             for j in self.N:
                 for k in self.K:
                     if z[i, j, k].X > 0:
-                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w[i, j].X]],
+                        w_total = 0
+                        if i == 'LIRA':
+                            for m in self.N:
+                                w_total += w[m, j].X
+                        if j == 'LIRA':
+                            for m in self.N:
+                                w_total += w[i, m].X
+                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w_total]],
                                                columns=['Origin', 'Destination', 'Frequency', 'AC Type',
                                                         'Direct Flow', 'Transfer Flow'])
                         result = pd.concat([result, new_row], ignore_index=True)
-        for i in self.N:
-            for j in self.N:
-                if w[i, j].X > 0:
-                    new_row = pd.DataFrame([[i, j, np.NaN, np.NaN, x[i, j].X, w[i, j].X]],
-                                           columns=['Origin', 'Destination', 'Frequency', 'AC Type',
-                                                    'Direct Flow', 'Transfer Flow'])
-                    # result = pd.concat([result, new_row], ignore_index=True)
+        # KPIs
+        # Print fleet composition
         print('Fleet')
         for k in self.K:
-            print('Leasing', k, ':', AC[k].X)
+            print(k)
+            print('Fleet:', AC[k].X)
+            hours = 0
+            block_time = self.BT[k] * 7 * AC[k].X
+            flights = 0
+
+            for i in self.N:
+                for j in self.N:
+                    flight_hrs = z[i, j, k].X * (self.d[i][j] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j])))
+                    hours += flight_hrs
+                    flights += z[i, j, k].X
+            utilization = hours/block_time * 100
+            print('Utilisation:', utilization, '%')
+            print('Weekly Flights:', flights)
+            print()
+        rpk = 0
+        LF = []
+        for i in self.N:
+            for j in self.N:
+                rpk += x[i, j].X * self.d[i][j]
+                if x[i, j].X > 0:
+                    seats = 0
+                    for k in self.K:
+                        seats += z[i, j, k].X * self.s[k]
+                    pax = x[i, j].X
+                    pax_w = 0
+                    if i == 'LIRA':
+                        for m in self.N:
+                            pax_w += w[m, j].X
+                    if j == 'LIRA':
+                        for m in self.N:
+                            pax_w += w[i, m].X
+                    pax += pax_w
+                    routeLF = pax/seats
+                    LF.append(routeLF)
+                if w[i, j].X > 0:
+                    rpk += w[i, j].X * (self.d[i]['LIRA'] + self.d['LIRA'][j])
+
+        print('Total RPK:', rpk)
+        print('AVG Load Factor', np.mean(LF))
+
+
 
         return result
 
