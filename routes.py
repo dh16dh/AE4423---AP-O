@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import itertools
 
-#pd.set_option("display.max_columns", None)
+pd.set_option("display.max_columns", None)
 #pd.set_option('display.max_rows', 200)
 
 # Initialize lists
@@ -151,5 +151,5 @@ for route in routes['route']:
 
 routes['minrwy'] = min_run
 
-# print(routes)
+print(routes['pairs'])
 

@@ -1,0 +1,49 @@
+,Origin,Destination,Route,Frequency,AC Type,Direct Flow
+0,LIBD,LIRA,1,2.0,Regional Turboprop,110.0
+1,LIRA,LIBD,1,2.0,Regional Turboprop,110.0
+2,LIBD,LIRA,1,1.0,Electric regional aircraft,110.0
+3,LIRA,LIBD,1,1.0,Electric regional aircraft,110.0
+4,LIPZ,LIRA,2,2.0,Regional Turboprop,147.0
+5,LIRA,LIPZ,2,2.0,Regional Turboprop,147.0
+6,LIPZ,LIRA,2,2.0,Electric regional aircraft,147.0
+7,LIRA,LIPZ,2,2.0,Electric regional aircraft,147.0
+8,LICJ,LIRA,3,2.0,Electric regional aircraft,76.0
+9,LIRA,LICJ,3,2.0,Electric regional aircraft,76.0
+10,LIRQ,LIRA,4,2.0,Regional Turboprop,148.0
+11,LIRA,LIRQ,4,2.0,Regional Turboprop,148.0
+12,LIRQ,LIRA,4,2.0,Electric regional aircraft,148.0
+13,LIRA,LIRQ,4,2.0,Electric regional aircraft,148.0
+14,LIEE,LIRA,5,1.0,Regional Turboprop,65.0
+15,LIRA,LIEE,5,1.0,Regional Turboprop,65.0
+16,LIEE,LIRA,5,1.0,Electric regional aircraft,65.0
+17,LIRA,LIEE,5,1.0,Electric regional aircraft,65.0
+18,LIPE,LIRA,6,2.0,Regional Turboprop,147.0
+19,LIRA,LIPE,6,2.0,Regional Turboprop,147.0
+20,LIPE,LIRA,6,2.0,Electric regional aircraft,147.0
+21,LIRA,LIPE,6,2.0,Electric regional aircraft,147.0
+22,LIPY,LIRA,7,3.0,Electric regional aircraft,107.0
+23,LIRA,LIPY,7,3.0,Electric regional aircraft,107.0
+24,LIRN,LIRA,8,2.0,Regional Turboprop,183.0
+25,LIRA,LIRN,8,2.0,Regional Turboprop,183.0
+26,LIRN,LIRA,8,3.0,Electric regional aircraft,183.0
+27,LIRA,LIRN,8,3.0,Electric regional aircraft,183.0
+28,LIBP,LIRA,9,3.0,Electric regional aircraft,109.0
+29,LIRA,LIBP,9,3.0,Electric regional aircraft,109.0
+30,LIPX,LIRA,10,3.0,Regional Turboprop,145.0
+31,LIRA,LIPX,10,3.0,Regional Turboprop,145.0
+32,LIPX,LIRA,10,1.0,Electric regional aircraft,145.0
+33,LIRA,LIPX,10,1.0,Electric regional aircraft,145.0
+34,LICA,LIRA,11,2.0,Electric regional aircraft,76.0
+35,LIRA,LICA,11,2.0,Electric regional aircraft,76.0
+36,LICC,LIRA,12,3.0,Regional Turboprop,104.0
+37,LIRA,LICC,12,3.0,Regional Turboprop,104.0
+38,LIMJ,LIRA,13,3.0,Regional Turboprop,106.0
+39,LIRA,LIMJ,13,3.0,Regional Turboprop,106.0
+40,LIPQ,LIRA,14,3.0,Regional Turboprop,106.0
+41,LIRA,LIPQ,14,3.0,Regional Turboprop,106.0
+42,LIRQ,LIPE,83,1.0,Electric regional aircraft,226.0
+43,LIRQ,LIRA,83,1.0,Electric regional aircraft,15.0
+44,LIPE,LIRQ,83,1.0,Electric regional aircraft,0.0
+45,LIPE,LIRA,83,1.0,Electric regional aircraft,23.0
+46,LIRA,LIRQ,83,1.0,Electric regional aircraft,15.0
+47,LIRA,LIPE,83,1.0,Electric regional aircraft,23.0

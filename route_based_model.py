@@ -139,18 +139,16 @@ class RouteBasedModel:
         elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
             print('Optimization was stopped with status %d' % status)
 
-        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow', 'Transfer Flow'])
+        result = pd.DataFrame(columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type', 'Direct Flow'])
 
-        for i in self.N:
-            for j in self.N:
-                for r in self.R:
-                    for k in self.K:
-                        for n in self.R:
-                            if z[r, k].X > 0:
-                                new_row = pd.DataFrame([[i, j, r, z[r, k].X, k, x[i, j, r].X, w[i, j, r, n].X]],
-                                                   columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
-                                                            'Direct Flow', 'Transfer Flow'])
-                                result = pd.concat([result, new_row], ignore_index=True)
+        for r in self.R:
+            for k in self.K:
+                if z[r, k].X > 0:
+                    for (i, j) in self.Pairs[r]:
+                        new_row = pd.DataFrame([[i, j, r, z[r, k].X, k, x[i, j, r].X]],
+                                           columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
+                                                    'Direct Flow'])
+                        result = pd.concat([result, new_row], ignore_index=True)
         print('Fleet')
         for k in self.K:
             print('Leasing', k, ':', AC[k].X)
