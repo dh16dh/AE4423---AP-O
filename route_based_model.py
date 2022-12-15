@@ -64,9 +64,10 @@ class RouteBasedModel:
         # Define Sets
         self.N = self.parameter_set.airport_data.index.to_list()
         self.K = self.parameter_set.aircraft_data.index.to_list()
-        self.R = routes['route']
+        self.R = routes.index.to_list()
         self.S = routes['subsequent']
         self.P = routes['precedent']
+        self.Pairs = routes['pairs']
 
         # Define Revenue Parameters
         self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
@@ -91,20 +92,23 @@ class RouteBasedModel:
 
         # Create binary matrix for range constraint
         self.a = {}
-        for r in R:
+        for r in self.R:
             for k in self.K:
                 if routes['range'][r] < self.Range[k]:
                     self.a[r, k] = 1
                 else:
                     self.a[r, k] = 0
 
-        # for i in self.N:
-        #     for j in self.N:
-        #         for k in self.K:
-        #             if self.d[i][j] < self.Range[k]:
-        #                 self.a[i, j, k] = 1
-        #             else:
-        #                 self.a[i, j, k] = 0
+        self.delta = {}
+        for r in self.R:
+            for i in self.N:
+                for j in self.N:
+                    if (i, j) in self.Pairs[r]:
+                        self.delta[i, j, r] = 1
+                    else:
+                        self.delta[i, j, r] = 0
+
+        print(self.delta)        
 
         # Create binary matrix for runway constraint
         self.rwy = {}
@@ -117,7 +121,7 @@ class RouteBasedModel:
 
     def network_fleet_model(self):
 
-        global self
+        #global self
         model = Model("NFM")
 
         # Define Decision Variables
@@ -127,7 +131,7 @@ class RouteBasedModel:
         AC = {}
 
         # Add Variables to Objective Function
-        for r in R:
+        for r in self.R:
             for i in self.N:
                 for j in self.N:
                     x[i, j, r] = model.addVar(obj=routes['yield'][r] * routes['range'][r], lb=0, vtype=GRB.INTEGER)
@@ -155,8 +159,8 @@ class RouteBasedModel:
                                     quicksum(w[m, j] * (1 - self.g[i]) for m in self.N) <=
                                     quicksum(z[i, j, k] * self.s[k] * self.LF for k in self.K), name='C2')
 
-            model.addConstr(quicksum(x[h, m, r] for m in self.S) + quicksum(quicksum(quicksum(w[p, m, r, n] for m in self.S for p in self.N for n in self.R))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name = 'C3')
-            model.addConstr(quicksum(x[m, h, r] for m in self.P) + quicksum(quicksum(quicksum(w[m, p, r, n] for n in self.R for m in self.P for p in self.N))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C4')
+            model.addConstr(quicksum(x['LIRA', m, r] for m in self.S) + quicksum(quicksum(quicksum(w[p, m, r, n] for m in self.S for p in self.N for n in self.R))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name = 'C3')
+            model.addConstr(quicksum(x[m, 'LIRA', r] for m in self.P) + quicksum(quicksum(quicksum(w[m, p, r, n] for n in self.R for m in self.P for p in self.N))) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C4')
             model.addConstr(quicksum(x[i, m, r] for m in self.S) + quicksum(x[m, j, i, r] for m in self.P) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.P for m in self.S))) + quicksum(quicksum(quicksum(w[p, m, n, r] for n in self.R for p in self.N for m in self.S))) <= quicksum(z[r, k] * self.s[k] * self.LF), name='C5')
 
             for k in self.K:
@@ -214,9 +218,10 @@ if __name__ == '__main__':
     annual_growth_path = "Groups_data/Group_17_Annual_growth.csv"
 
     parameters = Parameters()
-    model2 = RouteBasedModel()
+    model = RouteBasedModel()
 
-    final_result = model2.network_fleet_model()
+    final_result = model.network_fleet_model()
     final_result.to_csv('Route-Based Results.csv')
     # route_csv = pd.read_csv('Leg-Based Results.csv')
-    model2.plot_routes(final_result)
+    model.plot_routes(final_result)
+    

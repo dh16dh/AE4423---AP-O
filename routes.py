@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import itertools
 
-pd.set_option("display.max_columns", None)
+#pd.set_option("display.max_columns", None)
 
 # Initialize lists
 return_routes = []
@@ -129,5 +129,7 @@ tat_fac = []
 for route in routes['route']:
     tat_fac.append(tat_factor(route))
 routes['tatfactor'] = tat_fac
+
+routes.set_index('route', inplace=True)
 
 print(routes)
