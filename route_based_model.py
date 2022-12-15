@@ -23,6 +23,7 @@ class RouteBasedModel:
         self.Pairs = routes['pairs']
         self.RouteRange = routes['range']
         self.ICAOList = routes['ICAOs']
+        self.RouteMinRwy = routes['minrwy']
 
         # Define Revenue Parameters
         self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
@@ -63,16 +64,14 @@ class RouteBasedModel:
                     else:
                         self.delta[i, j, r] = 0
 
-        print(self.delta)        
-
         # Create binary matrix for runway constraint
         self.rwy = {}
-        for i in self.N:
+        for r in self.Rid:
             for k in self.K:
-                if self.AC_rwy[k] <= self.AP_rwy[i]:
-                    self.rwy[i, k] = 1
+                if self.AC_rwy[k] <= self.RouteMinRwy[r]:
+                    self.rwy[r, k] = 1
                 else:
-                    self.rwy[i, k] = 0
+                    self.rwy[r, k] = 0
 
     def network_fleet_model(self):
 
