@@ -82,7 +82,7 @@ def od_markets(route):
 # Set of ICAO
 ICAOs = []
 for i in routes['route']:
-    ICAOs.append(set(i))
+    ICAOs.append(list(set(i)))
 routes['ICAOs'] = ICAOs
 
 # Individual pairs
