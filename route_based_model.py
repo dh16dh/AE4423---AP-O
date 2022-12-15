@@ -22,6 +22,7 @@ class RouteBasedModel:
         self.P = routes['precedent']
         self.Pairs = routes['pairs']
         self.RouteRange = routes['range']
+        self.ICAOList = routes['ICAOs']
 
         # Define Revenue Parameters
         self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
@@ -55,8 +56,8 @@ class RouteBasedModel:
 
         self.delta = {}
         for r in self.Rid:
-            for i in self.N:
-                for j in self.N:
+            for i in self.ICAOList[r]:
+                for j in self.ICAOList[r]:
                     if (i, j) in self.Pairs[r]:
                         self.delta[i, j, r] = 1
                     else:
