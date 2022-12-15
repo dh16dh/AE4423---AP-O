@@ -29,10 +29,7 @@ class RouteBasedModel:
         self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
         self.d = self.parameter_set.distance_matrix  # ij
         # Define Cost Parameters
-        self.C_Lk = self.parameter_set.lease_cost  # k
-        self.C_Xk = self.parameter_set.operating_cost  # k
-        self.C_Tk = self.parameter_set.time_cost  # k
-        self.C_Fk = self.parameter_set.fuel_cost  # k
+        self.Cost = routes['operatingcosts']  # r, k
 
         # Define Constraint Parameters
         self.q = self.parameter_set.demand_matrix  # ij
