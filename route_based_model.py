@@ -218,7 +218,7 @@ if __name__ == '__main__':
     parameters = Parameters()
     route_model = RouteBasedModel()
 
-    # final_result = route_model.network_fleet_model()
-    # final_result.to_csv('Route-Based Results.csv')
-    route_csv = pd.read_csv('Route-Based Results.csv')
-    route_model.plot_routes(route_csv)
+    final_result = route_model.network_fleet_model()
+    final_result.to_csv('Route-Based Results.csv')
+    # route_csv = pd.read_csv('Route-Based Results.csv')
+    route_model.plot_routes(final_result)
