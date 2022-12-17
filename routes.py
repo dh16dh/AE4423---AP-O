@@ -151,6 +151,3 @@ for route in routes['route']:
     min_run.append(limit_runway(route))
 
 routes['minrwy'] = min_run
-
-print(routes['pairs'][196])
-
