@@ -73,6 +73,56 @@ class RouteBasedModel:
                 else:
                     self.rwy[r, k] = 0
 
+    def plot_routes(self, final_routes):
+        airport_data = self.parameter_set.airport_data
+        fig = go.Figure(data=go.Scattergeo())
+
+        fig.update_geos(showcountries=True,
+                        showsubunits=True,
+                        lataxis_range=[36, 48],
+                        lonaxis_range=[6, 20],
+                        resolution=50)
+
+        # Add Routes
+        for i in range(len(final_routes.index)):
+            fig.add_trace(go.Scattergeo(
+                lon=[airport_data['Longitude (deg)'].loc[final_routes['Origin'].loc[i]],
+                     airport_data['Longitude (deg)'].loc[final_routes['Destination'].loc[i]]],
+                lat=[airport_data['Latitude (deg)'].loc[final_routes['Origin'].loc[i]],
+                     airport_data['Latitude (deg)'].loc[final_routes['Destination'].loc[i]]],
+                mode='lines',
+                line=dict(
+                    width=1,
+                    color='red'
+                ),
+                opacity=final_routes['Frequency'].loc[i] / final_routes['Frequency'].max() / 2
+            ))
+
+        # Add airports:
+        fig.add_trace(go.Scattergeo(
+            lon=airport_data['Longitude (deg)'],
+            lat=airport_data['Latitude (deg)'],
+            text=airport_data['City Name'],
+            mode='markers',
+            marker=dict(
+                size=5,
+                color='red'
+            )
+        ))
+        fig.add_trace(go.Scattergeo(
+            lon=[airport_data.loc['LIRA']['Longitude (deg)']],
+            lat=[airport_data.loc['LIRA']['Latitude (deg)']],
+            text=airport_data['City Name']['LIRA'],
+            mode='markers',
+            marker=dict(
+                size=10,
+                color='blue'
+            )
+        ))
+        fig.update_layout(showlegend=False)
+        fig.write_image('Route_Map.svg')
+        fig.show()
+
     def network_fleet_model(self):
 
         model = Model("NFM")
@@ -125,6 +175,9 @@ class RouteBasedModel:
 
         model.update()
 
+        model.setParam('MIPGap', 0.02)    # Set satisfactory solution within 2% of upper bound optimal solution
+        model.setParam('Timelimit', 900)  # Set Timeout limit to 15 minutes
+
         model.optimize()
         status = model.status
 
@@ -165,6 +218,7 @@ if __name__ == '__main__':
     parameters = Parameters()
     route_model = RouteBasedModel()
 
-    final_result = route_model.network_fleet_model()
-    final_result.to_csv('Route-Based Results.csv')
-    # route_csv = pd.read_csv('Leg-Based Results.csv')
+    # final_result = route_model.network_fleet_model()
+    # final_result.to_csv('Route-Based Results.csv')
+    route_csv = pd.read_csv('Route-Based Results.csv')
+    route_model.plot_routes(route_csv)
