@@ -155,7 +155,7 @@ class LegBasedModel:
             )
         ))
         fig.update_layout(showlegend=False)
-        fig.write_image('Route_Map.svg')
+        fig.write_image('Route_Map (Leg Model).svg')
         fig.show()
 
     def network_fleet_model(self):
@@ -219,7 +219,8 @@ class LegBasedModel:
         elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
             print('Optimization was stopped with status %d' % status)
 
-        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type', 'Direct Flow', 'Transfer Flow'])
+        result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type',
+                                       'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
 
         # Create List of Routes Flown
         for i in self.N:
@@ -233,9 +234,13 @@ class LegBasedModel:
                         if j == 'LIRA':
                             for m in self.N:
                                 w_total += w[i, m].X
-                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w_total]],
+                        Capacity = 0
+                        for k1 in self.K:
+                            Capacity += self.s[k1]*z[i, j, k1].X
+                        LF = (x[i, j].X + w_total) / Capacity
+                        new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w_total, Capacity, LF]],
                                                columns=['Origin', 'Destination', 'Frequency', 'AC Type',
-                                                        'Direct Flow', 'Transfer Flow'])
+                                                        'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
                         result = pd.concat([result, new_row], ignore_index=True)
         # KPIs
         # Print fleet composition

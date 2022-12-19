@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from gurobipy import Model, GRB, LinExpr, quicksum
+from gurobipy import Model, GRB, LinExpr, quicksum, read
 from demand_forecast import DemandForecast
 from leg_based_model import Parameters
 from routes import routes
+from os import path
 
 
 class RouteBasedModel:
@@ -120,7 +121,7 @@ class RouteBasedModel:
             )
         ))
         fig.update_layout(showlegend=False)
-        fig.write_image('Route_Map.svg')
+        fig.write_image('Route_Map (Route Model).svg')
         fig.show()
 
     def network_fleet_model(self):
@@ -156,18 +157,30 @@ class RouteBasedModel:
                 for r in self.R:
                     model.addConstr(x[i, j, r] <= self.q[i][j] * self.delta[i, j, r], name='C1*_1')
                     for n in self.R:
-                        model.addConstr(w[i, j, r, n] <= self.q[i][j] * self.delta[i, 'LIRA', r] * self.delta['LIRA', j, n], name='C1*_2')
+                        model.addConstr(
+                            w[i, j, r, n] <= self.q[i][j] * self.delta[i, 'LIRA', r] * self.delta['LIRA', j, n],
+                            name='C1*_2')
         for r in self.R:
-            model.addConstr(quicksum(x['LIRA', m, r] for m in self.S[r]['LIRA']) + quicksum(quicksum(quicksum(w[p, m, n, r] for m in self.S[r]['LIRA']) for p in self.N) for n in self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_Hm')
+            model.addConstr(quicksum(x['LIRA', m, r] for m in self.S[r]['LIRA']) + quicksum(
+                quicksum(quicksum(w[p, m, n, r] for m in self.S[r]['LIRA']) for p in self.N) for n in
+                self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_Hm')
         for r in self.R2:
             i = self.S[r]['LIRA'][0]
             j = self.S[r]['LIRA'][1]
-            model.addConstr(quicksum(x[i, m, r] for m in self.S[r][j]) + quicksum(x[m, j, r] for m in self.P[r][i]) + quicksum(quicksum(w[p, j, r, n] for p in self.N) for n in self.R) + quicksum(quicksum(w[i, p, r, n] for p in self.N) for n in self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_spokes')
+            model.addConstr(
+                quicksum(x[i, m, r] for m in self.S[r][j]) + quicksum(x[m, j, r] for m in self.P[r][i]) + quicksum(
+                    quicksum(w[p, j, n, r] for p in self.N) for n in self.R) + quicksum(
+                    quicksum(w[i, p, r, n] for p in self.N) for n in self.R) <= quicksum(
+                    z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_spokes')
         for r in self.R:
             i = self.S[r]['LIRA'][-2]
-            model.addConstr(quicksum(x[m, 'LIRA', r] for m in self.P[r][i]) + quicksum(quicksum(quicksum(w[m, p, r, n] for m in self.P[r][i]) for p in self.N) for n in self.R) <= quicksum(z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_mH')
+            model.addConstr(quicksum(x[m, 'LIRA', r] for m in self.P[r][i]) + quicksum(
+                quicksum(quicksum(w[m, p, r, n] for m in self.P[r][i]) for p in self.N) for n in self.R) <= quicksum(
+                z[r, k] * self.s[k] * self.LF for k in self.K), name='C2_mH')
         for k in self.K:
-            model.addConstr(quicksum((self.RouteRange[r] / self.sp[k] + self.LTO[k]*self.LTO_Route[r] + self.ChargeTime[k]) * z[r, k] for r in self.R) <= 7 * self.BT[k] * AC[k], name='C4')
+            model.addConstr(quicksum(
+                (self.RouteRange[r] / self.sp[k] + self.LTO[k] * self.LTO_Route[r] + self.ChargeTime[k]) * z[r, k] for r
+                in self.R) <= 7 * self.BT[k] * AC[k], name='C4')
         for r in self.R:
             for k in self.K:
                 model.addConstr(z[r, k] <= self.a[r, k] * 999, name='C7')
@@ -175,7 +188,7 @@ class RouteBasedModel:
 
         model.update()
 
-        model.setParam('MIPGap', 0.02)    # Set satisfactory solution within 2% of upper bound optimal solution
+        # model.setParam('MIPGap', 0.02)  # Set satisfactory solution within 2% of upper bound optimal solution
         model.setParam('Timelimit', 900)  # Set Timeout limit to 15 minutes
 
         model.optimize()
@@ -192,21 +205,74 @@ class RouteBasedModel:
         elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
             print('Optimization was stopped with status %d' % status)
 
-        result = pd.DataFrame(columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type', 'Direct Flow'])
+        result = pd.DataFrame(columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
+                                       'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
 
+        # Create Subset of Flown Routes
+        final_routes_set = []
         for r in self.R:
             for k in self.K:
                 if z[r, k].X > 0:
-                    for (i, j) in self.Pairs[r]:
-                        new_row = pd.DataFrame([[i, j, r, z[r, k].X, k, x[i, j, r].X]],
-                                           columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
-                                                    'Direct Flow'])
+                    final_routes_set.append(r)
+
+        # Create List of Routes Flown
+        for r in self.R:
+            for k in self.K:
+                if z[r, k].X > 0:
+                    for apt in range(len(self.Route[r]) - 1):
+                        i = self.Route[r][apt]
+                        j = self.Route[r][apt + 1]
+                        x_total = 0
+                        w_total = 0
+                        if i == 'LIRA' and j == self.Route[r][1]:
+                            for m in self.S[r]['LIRA']:
+                                x_total += x['LIRA', m, r].X
+                                for p in self.N:
+                                    for n in self.R:
+                                        w_total += w[p, m, n, r].X
+                        if i != 'LIRA' and j != 'LIRA':
+                            for m in self.S[r][j]:
+                                x_total += x[i, m, r].X
+                            for m in self.P[r][i]:
+                                x_total += x[m, j, r].X
+                            for p in self.N:
+                                for n in self.R:
+                                    w_total += w[p, j, n, r].X + w[i, p, r, n].X
+                        if i == self.Route[r][-2] and j == 'LIRA':
+                            for m in self.P[r][self.S[r]['LIRA'][-2]]:
+                                x_total += x[m, 'LIRA', r].X
+                                for p in self.N:
+                                    for n in self.R:
+                                        w_total += w[m, p, r, n].X
+                        Capacity = 0
+                        for k1 in self.K:
+                            Capacity += self.s[k1] * z[r, k1].X
+                        LF = (x_total + w_total) / Capacity
+                        new_row = pd.DataFrame([[i, j, self.Route[r], z[r, k].X, k, x_total, w_total, Capacity, LF]],
+                                               columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
+                                                        'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
                         result = pd.concat([result, new_row], ignore_index=True)
+        # KPIs
+        # Print fleet composition
         print('Fleet')
         for k in self.K:
-            print('Leasing', k, ':', AC[k].X)
-
+            print(k)
+            print('Fleet:', AC[k].X)
+            hours = 0
+            block_time = self.BT[k] * 7 * AC[k].X
+            flights = 0
+            for r in self.R:
+                flight_hrs = z[r, k].X * (
+                        self.RouteRange[r] / self.sp[k] + self.LTO[k] * self.LTO_Route[r] + self.ChargeTime[k])
+                hours += flight_hrs
+                if z[r, k].X > 0:
+                    flights += len(self.Route[r]) - 1
+            utilization = hours / block_time * 100
+            print('Utilisation:', utilization, '%')
+            print('Weekly Flights:', flights)
+            print()
         return result
+
 
 if __name__ == '__main__':
     aircraft_path = 'Groups_data/Aircraft_info.csv'

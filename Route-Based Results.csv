@@ -1,323 +1,96 @@
-,Origin,Destination,Route,Frequency,AC Type,Direct Flow
-0,LIRA,LIRN,8,1.0,Regional Turboprop,31.0
-1,LIRN,LIRA,8,1.0,Regional Turboprop,0.0
-2,LIRA,LIBD,16,1.0,Regional Turboprop,0.0
-3,LIRA,LICJ,16,1.0,Regional Turboprop,0.0
-4,LIBD,LICJ,16,1.0,Regional Turboprop,36.0
-5,LIBD,LIRA,16,1.0,Regional Turboprop,0.0
-6,LICJ,LIRA,16,1.0,Regional Turboprop,0.0
-7,LIRA,LIBD,21,3.0,Electric regional aircraft,110.0
-8,LIRA,LIRN,21,3.0,Electric regional aircraft,0.0
-9,LIBD,LIRN,21,3.0,Electric regional aircraft,115.0
-10,LIBD,LIRA,21,3.0,Electric regional aircraft,0.0
-11,LIRN,LIRA,21,3.0,Electric regional aircraft,4.0
-12,LIRA,LIBD,24,1.0,Regional Turboprop,0.0
-13,LIRA,LICA,24,1.0,Regional Turboprop,0.0
-14,LIBD,LICA,24,1.0,Regional Turboprop,36.0
-15,LIBD,LIRA,24,1.0,Regional Turboprop,0.0
-16,LICA,LIRA,24,1.0,Regional Turboprop,32.0
-17,LIRA,LIBD,25,2.0,Regional Turboprop,0.0
-18,LIRA,LICC,25,2.0,Regional Turboprop,0.0
-19,LIBD,LICC,25,2.0,Regional Turboprop,72.0
-20,LIBD,LIRA,25,2.0,Regional Turboprop,0.0
-21,LICC,LIRA,25,2.0,Regional Turboprop,0.0
-22,LIRA,LIPZ,30,3.0,Electric regional aircraft,115.0
-23,LIRA,LIRQ,30,3.0,Electric regional aircraft,0.0
-24,LIPZ,LIRQ,30,3.0,Electric regional aircraft,115.0
-25,LIPZ,LIRA,30,3.0,Electric regional aircraft,0.0
-26,LIRQ,LIRA,30,3.0,Electric regional aircraft,115.0
-27,LIRA,LIPZ,32,1.0,Regional Turboprop,32.0
-28,LIRA,LIPE,32,1.0,Regional Turboprop,0.0
-29,LIPZ,LIPE,32,1.0,Regional Turboprop,36.0
-30,LIPZ,LIRA,32,1.0,Regional Turboprop,0.0
-31,LIPE,LIRA,32,1.0,Regional Turboprop,0.0
-32,LIRA,LICJ,47,2.0,Electric regional aircraft,76.0
-33,LIRA,LIRN,47,2.0,Electric regional aircraft,0.0
-34,LICJ,LIRN,47,2.0,Electric regional aircraft,76.0
-35,LICJ,LIRA,47,2.0,Electric regional aircraft,0.0
-36,LIRN,LIRA,47,2.0,Electric regional aircraft,0.0
-37,LIRA,LICJ,50,1.0,Regional Turboprop,16.0
-38,LIRA,LICA,50,1.0,Regional Turboprop,0.0
-39,LICJ,LICA,50,1.0,Regional Turboprop,36.0
-40,LICJ,LIRA,50,1.0,Regional Turboprop,0.0
-41,LICA,LIRA,50,1.0,Regional Turboprop,0.0
-42,LIRA,LICJ,51,2.0,Regional Turboprop,0.0
-43,LIRA,LICC,51,2.0,Regional Turboprop,0.0
-44,LICJ,LICC,51,2.0,Regional Turboprop,72.0
-45,LICJ,LIRA,51,2.0,Regional Turboprop,0.0
-46,LICC,LIRA,51,2.0,Regional Turboprop,0.0
-47,LIRA,LIRQ,55,1.0,Regional Turboprop,0.0
-48,LIRA,LIPZ,55,1.0,Regional Turboprop,0.0
-49,LIRQ,LIPZ,55,1.0,Regional Turboprop,151.0
-50,LIRQ,LIRA,55,1.0,Regional Turboprop,0.0
-51,LIPZ,LIRA,55,1.0,Regional Turboprop,116.0
-52,LIRA,LIRQ,55,3.0,Electric regional aircraft,0.0
-53,LIRA,LIPZ,55,3.0,Electric regional aircraft,0.0
-54,LIRQ,LIPZ,55,3.0,Electric regional aircraft,151.0
-55,LIRQ,LIRA,55,3.0,Electric regional aircraft,0.0
-56,LIPZ,LIRA,55,3.0,Electric regional aircraft,116.0
-57,LIRA,LIRQ,56,2.0,Regional Turboprop,0.0
-58,LIRA,LICJ,56,2.0,Regional Turboprop,0.0
-59,LIRQ,LICJ,56,2.0,Regional Turboprop,72.0
-60,LIRQ,LIRA,56,2.0,Regional Turboprop,0.0
-61,LICJ,LIRA,56,2.0,Regional Turboprop,17.0
-62,LIRA,LIRQ,57,1.0,Regional Turboprop,0.0
-63,LIRA,LIEE,57,1.0,Regional Turboprop,0.0
-64,LIRQ,LIEE,57,1.0,Regional Turboprop,36.0
-65,LIRQ,LIRA,57,1.0,Regional Turboprop,0.0
-66,LIEE,LIRA,57,1.0,Regional Turboprop,34.0
-67,LIRA,LIRQ,58,3.0,Electric regional aircraft,10.0
-68,LIRA,LIPE,58,3.0,Electric regional aircraft,0.0
-69,LIRQ,LIPE,58,3.0,Electric regional aircraft,115.0
-70,LIRQ,LIRA,58,3.0,Electric regional aircraft,0.0
-71,LIPE,LIRA,58,3.0,Electric regional aircraft,72.0
-72,LIRA,LIRQ,60,3.0,Electric regional aircraft,115.0
-73,LIRA,LIRN,60,3.0,Electric regional aircraft,0.0
-74,LIRQ,LIRN,60,3.0,Electric regional aircraft,115.0
-75,LIRQ,LIRA,60,3.0,Electric regional aircraft,0.0
-76,LIRN,LIRA,60,3.0,Electric regional aircraft,103.0
-77,LIRA,LIRQ,61,1.0,Electric regional aircraft,38.0
-78,LIRA,LIBP,61,1.0,Electric regional aircraft,0.0
-79,LIRQ,LIBP,61,1.0,Electric regional aircraft,38.0
-80,LIRQ,LIRA,61,1.0,Electric regional aircraft,0.0
-81,LIBP,LIRA,61,1.0,Electric regional aircraft,27.0
-82,LIRA,LIRQ,62,1.0,Regional Turboprop,0.0
-83,LIRA,LIPX,62,1.0,Regional Turboprop,0.0
-84,LIRQ,LIPX,62,1.0,Regional Turboprop,151.0
-85,LIRQ,LIRA,62,1.0,Regional Turboprop,0.0
-86,LIPX,LIRA,62,1.0,Regional Turboprop,68.0
-87,LIRA,LIRQ,62,3.0,Electric regional aircraft,0.0
-88,LIRA,LIPX,62,3.0,Electric regional aircraft,0.0
-89,LIRQ,LIPX,62,3.0,Electric regional aircraft,151.0
-90,LIRQ,LIRA,62,3.0,Electric regional aircraft,0.0
-91,LIPX,LIRA,62,3.0,Electric regional aircraft,68.0
-92,LIRA,LIRQ,65,3.0,Electric regional aircraft,0.0
-93,LIRA,LIMJ,65,3.0,Electric regional aircraft,0.0
-94,LIRQ,LIMJ,65,3.0,Electric regional aircraft,115.0
-95,LIRQ,LIRA,65,3.0,Electric regional aircraft,0.0
-96,LIMJ,LIRA,65,3.0,Electric regional aircraft,95.0
-97,LIRA,LIRQ,66,1.0,Regional Turboprop,0.0
-98,LIRA,LIPQ,66,1.0,Regional Turboprop,0.0
-99,LIRQ,LIPQ,66,1.0,Regional Turboprop,74.0
-100,LIRQ,LIRA,66,1.0,Regional Turboprop,0.0
-101,LIPQ,LIRA,66,1.0,Regional Turboprop,31.0
-102,LIRA,LIRQ,66,1.0,Electric regional aircraft,0.0
-103,LIRA,LIPQ,66,1.0,Electric regional aircraft,0.0
-104,LIRQ,LIPQ,66,1.0,Electric regional aircraft,74.0
-105,LIRQ,LIRA,66,1.0,Electric regional aircraft,0.0
-106,LIPQ,LIRA,66,1.0,Electric regional aircraft,31.0
-107,LIRA,LIEE,69,1.0,Regional Turboprop,29.0
-108,LIRA,LICJ,69,1.0,Regional Turboprop,0.0
-109,LIEE,LICJ,69,1.0,Regional Turboprop,36.0
-110,LIEE,LIRA,69,1.0,Regional Turboprop,0.0
-111,LICJ,LIRA,69,1.0,Regional Turboprop,0.0
-112,LIRA,LIEE,73,1.0,Regional Turboprop,36.0
-113,LIRA,LIRN,73,1.0,Regional Turboprop,0.0
-114,LIEE,LIRN,73,1.0,Regional Turboprop,36.0
-115,LIEE,LIRA,73,1.0,Regional Turboprop,0.0
-116,LIRN,LIRA,73,1.0,Regional Turboprop,0.0
-117,LIRA,LIPE,85,1.0,Electric regional aircraft,38.0
-118,LIRA,LIPY,85,1.0,Electric regional aircraft,0.0
-119,LIPE,LIPY,85,1.0,Electric regional aircraft,38.0
-120,LIPE,LIRA,85,1.0,Electric regional aircraft,0.0
-121,LIPY,LIRA,85,1.0,Electric regional aircraft,0.0
-122,LIRA,LIPE,86,3.0,Electric regional aircraft,115.0
-123,LIRA,LIRN,86,3.0,Electric regional aircraft,0.0
-124,LIPE,LIRN,86,3.0,Electric regional aircraft,115.0
-125,LIPE,LIRA,86,3.0,Electric regional aircraft,0.0
-126,LIRN,LIRA,86,3.0,Electric regional aircraft,0.0
-127,LIRA,LIPE,91,1.0,Regional Turboprop,13.0
-128,LIRA,LIMJ,91,1.0,Regional Turboprop,0.0
-129,LIPE,LIMJ,91,1.0,Regional Turboprop,36.0
-130,LIPE,LIRA,91,1.0,Regional Turboprop,0.0
-131,LIMJ,LIRA,91,1.0,Regional Turboprop,0.0
-132,LIRA,LIPY,93,1.0,Electric regional aircraft,0.0
-133,LIRA,LIBD,93,1.0,Electric regional aircraft,0.0
-134,LIPY,LIBD,93,1.0,Electric regional aircraft,38.0
-135,LIPY,LIRA,93,1.0,Electric regional aircraft,0.0
-136,LIBD,LIRA,93,1.0,Electric regional aircraft,38.0
-137,LIRA,LIPY,94,2.0,Electric regional aircraft,0.0
-138,LIRA,LIPZ,94,2.0,Electric regional aircraft,0.0
-139,LIPY,LIPZ,94,2.0,Electric regional aircraft,76.0
-140,LIPY,LIRA,94,2.0,Electric regional aircraft,0.0
-141,LIPZ,LIRA,94,2.0,Electric regional aircraft,0.0
-142,LIRA,LIPY,95,1.0,Regional Turboprop,0.0
-143,LIRA,LICJ,95,1.0,Regional Turboprop,0.0
-144,LIPY,LICJ,95,1.0,Regional Turboprop,36.0
-145,LIPY,LIRA,95,1.0,Regional Turboprop,0.0
-146,LICJ,LIRA,95,1.0,Regional Turboprop,17.0
-147,LIRA,LIPY,98,3.0,Electric regional aircraft,0.0
-148,LIRA,LIPE,98,3.0,Electric regional aircraft,4.0
-149,LIPY,LIPE,98,3.0,Electric regional aircraft,111.0
-150,LIPY,LIRA,98,3.0,Electric regional aircraft,0.0
-151,LIPE,LIRA,98,3.0,Electric regional aircraft,21.0
-152,LIRA,LIPY,99,2.0,Electric regional aircraft,69.0
-153,LIRA,LIRN,99,2.0,Electric regional aircraft,0.0
-154,LIPY,LIRN,99,2.0,Electric regional aircraft,76.0
-155,LIPY,LIRA,99,2.0,Electric regional aircraft,0.0
-156,LIRN,LIRA,99,2.0,Electric regional aircraft,0.0
-157,LIRA,LIPY,100,1.0,Electric regional aircraft,38.0
-158,LIRA,LIBP,100,1.0,Electric regional aircraft,0.0
-159,LIPY,LIBP,100,1.0,Electric regional aircraft,38.0
-160,LIPY,LIRA,100,1.0,Electric regional aircraft,0.0
-161,LIBP,LIRA,100,1.0,Electric regional aircraft,6.0
-162,LIRA,LIPY,101,2.0,Electric regional aircraft,0.0
-163,LIRA,LIPX,101,2.0,Electric regional aircraft,0.0
-164,LIPY,LIPX,101,2.0,Electric regional aircraft,76.0
-165,LIPY,LIRA,101,2.0,Electric regional aircraft,0.0
-166,LIPX,LIRA,101,2.0,Electric regional aircraft,6.0
-167,LIRA,LIPY,102,1.0,Regional Turboprop,0.0
-168,LIRA,LICA,102,1.0,Regional Turboprop,0.0
-169,LIPY,LICA,102,1.0,Regional Turboprop,36.0
-170,LIPY,LIRA,102,1.0,Regional Turboprop,0.0
-171,LICA,LIRA,102,1.0,Regional Turboprop,15.0
-172,LIRA,LIPY,103,1.0,Regional Turboprop,0.0
-173,LIRA,LICC,103,1.0,Regional Turboprop,0.0
-174,LIPY,LICC,103,1.0,Regional Turboprop,36.0
-175,LIPY,LIRA,103,1.0,Regional Turboprop,0.0
-176,LICC,LIRA,103,1.0,Regional Turboprop,36.0
-177,LIRA,LIPY,104,1.0,Regional Turboprop,0.0
-178,LIRA,LIMJ,104,1.0,Regional Turboprop,0.0
-179,LIPY,LIMJ,104,1.0,Regional Turboprop,36.0
-180,LIPY,LIRA,104,1.0,Regional Turboprop,0.0
-181,LIMJ,LIRA,104,1.0,Regional Turboprop,11.0
-182,LIRA,LIPY,105,2.0,Regional Turboprop,0.0
-183,LIRA,LIPQ,105,2.0,Regional Turboprop,0.0
-184,LIPY,LIPQ,105,2.0,Regional Turboprop,72.0
-185,LIPY,LIRA,105,2.0,Regional Turboprop,0.0
-186,LIPQ,LIRA,105,2.0,Regional Turboprop,54.0
-187,LIRA,LIRN,106,3.0,Electric regional aircraft,0.0
-188,LIRA,LIBD,106,3.0,Electric regional aircraft,0.0
-189,LIRN,LIBD,106,3.0,Electric regional aircraft,115.0
-190,LIRN,LIRA,106,3.0,Electric regional aircraft,0.0
-191,LIBD,LIRA,106,3.0,Electric regional aircraft,43.0
-192,LIRA,LIRN,108,2.0,Electric regional aircraft,0.0
-193,LIRA,LICJ,108,2.0,Electric regional aircraft,0.0
-194,LIRN,LICJ,108,2.0,Electric regional aircraft,76.0
-195,LIRN,LIRA,108,2.0,Electric regional aircraft,0.0
-196,LICJ,LIRA,108,2.0,Electric regional aircraft,0.0
-197,LIRA,LIRN,110,1.0,Regional Turboprop,0.0
-198,LIRA,LIEE,110,1.0,Regional Turboprop,0.0
-199,LIRN,LIEE,110,1.0,Regional Turboprop,36.0
-200,LIRN,LIRA,110,1.0,Regional Turboprop,0.0
-201,LIEE,LIRA,110,1.0,Regional Turboprop,31.0
-202,LIRA,LIRN,112,2.0,Electric regional aircraft,76.0
-203,LIRA,LIPY,112,2.0,Electric regional aircraft,0.0
-204,LIRN,LIPY,112,2.0,Electric regional aircraft,76.0
-205,LIRN,LIRA,112,2.0,Electric regional aircraft,0.0
-206,LIPY,LIRA,112,2.0,Electric regional aircraft,69.0
-207,LIRA,LIRN,113,2.0,Electric regional aircraft,76.0
-208,LIRA,LIBP,113,2.0,Electric regional aircraft,0.0
-209,LIRN,LIBP,113,2.0,Electric regional aircraft,76.0
-210,LIRN,LIRA,113,2.0,Electric regional aircraft,0.0
-211,LIBP,LIRA,113,2.0,Electric regional aircraft,76.0
-212,LIRA,LIRN,115,2.0,Electric regional aircraft,0.0
-213,LIRA,LICA,115,2.0,Electric regional aircraft,0.0
-214,LIRN,LICA,115,2.0,Electric regional aircraft,76.0
-215,LIRN,LIRA,115,2.0,Electric regional aircraft,0.0
-216,LICA,LIRA,115,2.0,Electric regional aircraft,31.0
-217,LIRA,LIRN,116,3.0,Regional Turboprop,0.0
-218,LIRA,LICC,116,3.0,Regional Turboprop,0.0
-219,LIRN,LICC,116,3.0,Regional Turboprop,106.0
-220,LIRN,LIRA,116,3.0,Regional Turboprop,0.0
-221,LICC,LIRA,116,3.0,Regional Turboprop,38.0
-222,LIRA,LIBP,119,1.0,Electric regional aircraft,0.0
-223,LIRA,LIBD,119,1.0,Electric regional aircraft,0.0
-224,LIBP,LIBD,119,1.0,Electric regional aircraft,38.0
-225,LIBP,LIRA,119,1.0,Electric regional aircraft,0.0
-226,LIBD,LIRA,119,1.0,Electric regional aircraft,29.0
-227,LIRA,LIBP,120,2.0,Electric regional aircraft,0.0
-228,LIRA,LIPZ,120,2.0,Electric regional aircraft,0.0
-229,LIBP,LIPZ,120,2.0,Electric regional aircraft,76.0
-230,LIBP,LIRA,120,2.0,Electric regional aircraft,0.0
-231,LIPZ,LIRA,120,2.0,Electric regional aircraft,31.0
-232,LIRA,LIBP,121,1.0,Regional Turboprop,0.0
-233,LIRA,LICJ,121,1.0,Regional Turboprop,0.0
-234,LIBP,LICJ,121,1.0,Regional Turboprop,36.0
-235,LIBP,LIRA,121,1.0,Regional Turboprop,0.0
-236,LICJ,LIRA,121,1.0,Regional Turboprop,0.0
-237,LIRA,LIBP,122,2.0,Electric regional aircraft,10.0
-238,LIRA,LIRQ,122,2.0,Electric regional aircraft,0.0
-239,LIBP,LIRQ,122,2.0,Electric regional aircraft,76.0
-240,LIBP,LIRA,122,2.0,Electric regional aircraft,0.0
-241,LIRQ,LIRA,122,2.0,Electric regional aircraft,0.0
-242,LIRA,LIBP,124,2.0,Electric regional aircraft,0.0
-243,LIRA,LIPE,124,2.0,Electric regional aircraft,0.0
-244,LIBP,LIPE,124,2.0,Electric regional aircraft,76.0
-245,LIBP,LIRA,124,2.0,Electric regional aircraft,0.0
-246,LIPE,LIRA,124,2.0,Electric regional aircraft,1.0
-247,LIRA,LIBP,125,1.0,Electric regional aircraft,38.0
-248,LIRA,LIPY,125,1.0,Electric regional aircraft,0.0
-249,LIBP,LIPY,125,1.0,Electric regional aircraft,38.0
-250,LIBP,LIRA,125,1.0,Electric regional aircraft,0.0
-251,LIPY,LIRA,125,1.0,Electric regional aircraft,38.0
-252,LIRA,LIBP,126,2.0,Electric regional aircraft,61.0
-253,LIRA,LIRN,126,2.0,Electric regional aircraft,0.0
-254,LIBP,LIRN,126,2.0,Electric regional aircraft,76.0
-255,LIBP,LIRA,126,2.0,Electric regional aircraft,0.0
-256,LIRN,LIRA,126,2.0,Electric regional aircraft,0.0
-257,LIRA,LIBP,127,2.0,Electric regional aircraft,0.0
-258,LIRA,LIPX,127,2.0,Electric regional aircraft,0.0
-259,LIBP,LIPX,127,2.0,Electric regional aircraft,76.0
-260,LIBP,LIRA,127,2.0,Electric regional aircraft,0.0
-261,LIPX,LIRA,127,2.0,Electric regional aircraft,71.0
-262,LIRA,LIBP,128,1.0,Regional Turboprop,0.0
-263,LIRA,LICA,128,1.0,Regional Turboprop,0.0
-264,LIBP,LICA,128,1.0,Regional Turboprop,36.0
-265,LIBP,LIRA,128,1.0,Regional Turboprop,0.0
-266,LICA,LIRA,128,1.0,Regional Turboprop,0.0
-267,LIRA,LIBP,129,1.0,Regional Turboprop,0.0
-268,LIRA,LICC,129,1.0,Regional Turboprop,0.0
-269,LIBP,LICC,129,1.0,Regional Turboprop,36.0
-270,LIBP,LIRA,129,1.0,Regional Turboprop,0.0
-271,LICC,LIRA,129,1.0,Regional Turboprop,27.0
-272,LIRA,LIBP,130,1.0,Regional Turboprop,0.0
-273,LIRA,LIMJ,130,1.0,Regional Turboprop,0.0
-274,LIBP,LIMJ,130,1.0,Regional Turboprop,36.0
-275,LIBP,LIRA,130,1.0,Regional Turboprop,0.0
-276,LIMJ,LIRA,130,1.0,Regional Turboprop,0.0
-277,LIRA,LIBP,131,1.0,Electric regional aircraft,0.0
-278,LIRA,LIPQ,131,1.0,Electric regional aircraft,0.0
-279,LIBP,LIPQ,131,1.0,Electric regional aircraft,38.0
-280,LIBP,LIRA,131,1.0,Electric regional aircraft,0.0
-281,LIPQ,LIRA,131,1.0,Electric regional aircraft,21.0
-282,LIRA,LIPX,135,3.0,Electric regional aircraft,109.0
-283,LIRA,LIRQ,135,3.0,Electric regional aircraft,0.0
-284,LIPX,LIRQ,135,3.0,Electric regional aircraft,115.0
-285,LIPX,LIRA,135,3.0,Electric regional aircraft,0.0
-286,LIRQ,LIRA,135,3.0,Electric regional aircraft,48.0
-287,LIRA,LIPX,143,1.0,Regional Turboprop,36.0
-288,LIRA,LIMJ,143,1.0,Regional Turboprop,0.0
-289,LIPX,LIMJ,143,1.0,Regional Turboprop,36.0
-290,LIPX,LIRA,143,1.0,Regional Turboprop,0.0
-291,LIMJ,LIRA,143,1.0,Regional Turboprop,0.0
-292,LIRA,LICA,152,2.0,Electric regional aircraft,76.0
-293,LIRA,LIRN,152,2.0,Electric regional aircraft,0.0
-294,LICA,LIRN,152,2.0,Electric regional aircraft,76.0
-295,LICA,LIRA,152,2.0,Electric regional aircraft,0.0
-296,LIRN,LIRA,152,2.0,Electric regional aircraft,76.0
-297,LIRA,LICA,155,2.0,Regional Turboprop,2.0
-298,LIRA,LICC,155,2.0,Regional Turboprop,0.0
-299,LICA,LICC,155,2.0,Regional Turboprop,69.0
-300,LICA,LIRA,155,2.0,Regional Turboprop,0.0
-301,LICC,LIRA,155,2.0,Regional Turboprop,3.0
-302,LIRA,LICC,160,2.0,Regional Turboprop,68.0
-303,LIRA,LICJ,160,2.0,Regional Turboprop,0.0
-304,LICC,LICJ,160,2.0,Regional Turboprop,72.0
-305,LICC,LIRA,160,2.0,Regional Turboprop,0.0
-306,LICJ,LIRA,160,2.0,Regional Turboprop,58.0
-307,LIRA,LICC,168,1.0,Regional Turboprop,36.0
-308,LIRA,LICA,168,1.0,Regional Turboprop,0.0
-309,LICC,LICA,168,1.0,Regional Turboprop,36.0
-310,LICC,LIRA,168,1.0,Regional Turboprop,0.0
-311,LICA,LIRA,168,1.0,Regional Turboprop,0.0
-312,LIRA,LIMJ,174,3.0,Electric regional aircraft,106.0
-313,LIRA,LIRQ,174,3.0,Electric regional aircraft,0.0
-314,LIMJ,LIRQ,174,3.0,Electric regional aircraft,115.0
-315,LIMJ,LIRA,174,3.0,Electric regional aircraft,0.0
-316,LIRQ,LIRA,174,3.0,Electric regional aircraft,0.0
-317,LIRA,LIPQ,189,3.0,Regional Turboprop,106.0
-318,LIRA,LIPE,189,3.0,Regional Turboprop,0.0
-319,LIPQ,LIPE,189,3.0,Regional Turboprop,108.0
-320,LIPQ,LIRA,189,3.0,Regional Turboprop,0.0
-321,LIPE,LIRA,189,3.0,Regional Turboprop,76.0
+,Origin,Destination,Route,Frequency,AC Type,Direct Flow,Transfer Flow,Capacity,LF
+0,LIRA,LIEE,"['LIRA', 'LIEE', 'LIRA']",2.0,Regional Turboprop,65.0,7.0,90.0,0.8
+1,LIEE,LIRA,"['LIRA', 'LIEE', 'LIRA']",2.0,Regional Turboprop,65.0,7.0,90.0,0.8
+2,LIRA,LIBD,"['LIRA', 'LIBD', 'LIRN', 'LIRA']",3.0,Electric regional aircraft,110.0,5.0,144.0,0.7986111111111112
+3,LIBD,LIRN,"['LIRA', 'LIBD', 'LIRN', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+4,LIRN,LIRA,"['LIRA', 'LIBD', 'LIRN', 'LIRA']",3.0,Electric regional aircraft,35.0,80.0,144.0,0.7986111111111112
+5,LIRA,LIPZ,"['LIRA', 'LIPZ', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+6,LIPZ,LIRQ,"['LIRA', 'LIPZ', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+7,LIRQ,LIRA,"['LIRA', 'LIPZ', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,0.0,38.0,48.0,0.7916666666666666
+8,LIRA,LIPZ,"['LIRA', 'LIPZ', 'LIPQ', 'LIRA']",3.0,Regional Turboprop,108.0,0.0,135.0,0.8
+9,LIPZ,LIPQ,"['LIRA', 'LIPZ', 'LIPQ', 'LIRA']",3.0,Regional Turboprop,108.0,0.0,135.0,0.8
+10,LIPQ,LIRA,"['LIRA', 'LIPZ', 'LIPQ', 'LIRA']",3.0,Regional Turboprop,106.0,2.0,135.0,0.8
+11,LIRA,LICJ,"['LIRA', 'LICJ', 'LIRN', 'LIRA']",2.0,Electric regional aircraft,73.0,3.0,96.0,0.7916666666666666
+12,LICJ,LIRN,"['LIRA', 'LICJ', 'LIRN', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+13,LIRN,LIRA,"['LIRA', 'LICJ', 'LIRN', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+14,LIRA,LICJ,"['LIRA', 'LICJ', 'LICC', 'LIRA']",2.0,Regional Turboprop,19.0,53.0,90.0,0.8
+15,LICJ,LICC,"['LIRA', 'LICJ', 'LICC', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+16,LICC,LIRA,"['LIRA', 'LICJ', 'LICC', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+17,LIRA,LIRQ,"['LIRA', 'LIRQ', 'LIPZ', 'LIRA']",1.0,Electric regional aircraft,36.0,2.0,48.0,0.7916666666666666
+18,LIRQ,LIPZ,"['LIRA', 'LIRQ', 'LIPZ', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+19,LIPZ,LIRA,"['LIRA', 'LIRQ', 'LIPZ', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+20,LIRA,LIRQ,"['LIRA', 'LIRQ', 'LIPY', 'LIRA']",2.0,Electric regional aircraft,12.0,64.0,96.0,0.7916666666666666
+21,LIRQ,LIPY,"['LIRA', 'LIRQ', 'LIPY', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+22,LIPY,LIRA,"['LIRA', 'LIRQ', 'LIPY', 'LIRA']",2.0,Electric regional aircraft,31.0,45.0,96.0,0.7916666666666666
+23,LIRA,LIRQ,"['LIRA', 'LIRQ', 'LIPX', 'LIRA']",3.0,Electric regional aircraft,1.0,114.0,144.0,0.7986111111111112
+24,LIRQ,LIPX,"['LIRA', 'LIRQ', 'LIPX', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+25,LIPX,LIRA,"['LIRA', 'LIRQ', 'LIPX', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+26,LIRA,LIRQ,"['LIRA', 'LIRQ', 'LIMJ', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+27,LIRQ,LIMJ,"['LIRA', 'LIRQ', 'LIMJ', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+28,LIMJ,LIRA,"['LIRA', 'LIRQ', 'LIMJ', 'LIRA']",3.0,Electric regional aircraft,106.0,9.0,144.0,0.7986111111111112
+29,LIRA,LIPE,"['LIRA', 'LIPE', 'LIPZ', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+30,LIPE,LIPZ,"['LIRA', 'LIPE', 'LIPZ', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+31,LIPZ,LIRA,"['LIRA', 'LIPE', 'LIPZ', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+32,LIRA,LIPE,"['LIRA', 'LIPE', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+33,LIPE,LIRQ,"['LIRA', 'LIPE', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+34,LIRQ,LIRA,"['LIRA', 'LIPE', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,35.0,3.0,48.0,0.7916666666666666
+35,LIRA,LIPE,"['LIRA', 'LIPE', 'LIPY', 'LIRA']",2.0,Electric regional aircraft,60.0,16.0,96.0,0.7916666666666666
+36,LIPE,LIPY,"['LIRA', 'LIPE', 'LIPY', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+37,LIPY,LIRA,"['LIRA', 'LIPE', 'LIPY', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+38,LIRA,LIPY,"['LIRA', 'LIPY', 'LIRQ', 'LIRA']",2.0,Electric regional aircraft,69.0,7.0,96.0,0.7916666666666666
+39,LIPY,LIRQ,"['LIRA', 'LIPY', 'LIRQ', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+40,LIRQ,LIRA,"['LIRA', 'LIPY', 'LIRQ', 'LIRA']",2.0,Electric regional aircraft,58.0,18.0,96.0,0.7916666666666666
+41,LIRA,LIPY,"['LIRA', 'LIPY', 'LIPE', 'LIRA']",1.0,Electric regional aircraft,0.0,38.0,48.0,0.7916666666666666
+42,LIPY,LIPE,"['LIRA', 'LIPY', 'LIPE', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+43,LIPE,LIRA,"['LIRA', 'LIPY', 'LIPE', 'LIRA']",1.0,Electric regional aircraft,26.0,12.0,48.0,0.7916666666666666
+44,LIRA,LIPY,"['LIRA', 'LIPY', 'LIBP', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+45,LIPY,LIBP,"['LIRA', 'LIPY', 'LIBP', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+46,LIBP,LIRA,"['LIRA', 'LIPY', 'LIBP', 'LIRA']",1.0,Electric regional aircraft,34.0,4.0,48.0,0.7916666666666666
+47,LIRA,LIRN,"['LIRA', 'LIRN', 'LIBD', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+48,LIRN,LIBD,"['LIRA', 'LIRN', 'LIBD', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+49,LIBD,LIRA,"['LIRA', 'LIRN', 'LIBD', 'LIRA']",3.0,Electric regional aircraft,110.0,5.0,144.0,0.7986111111111112
+50,LIRA,LIRN,"['LIRA', 'LIRN', 'LICJ', 'LIRA']",2.0,Electric regional aircraft,21.0,55.0,96.0,0.7916666666666666
+51,LIRN,LICJ,"['LIRA', 'LIRN', 'LICJ', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+52,LICJ,LIRA,"['LIRA', 'LIRN', 'LICJ', 'LIRA']",2.0,Electric regional aircraft,28.0,48.0,96.0,0.7916666666666666
+53,LIRA,LIRN,"['LIRA', 'LIRN', 'LIBP', 'LIRA']",2.0,Electric regional aircraft,47.0,29.0,96.0,0.7916666666666666
+54,LIRN,LIBP,"['LIRA', 'LIRN', 'LIBP', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+55,LIBP,LIRA,"['LIRA', 'LIRN', 'LIBP', 'LIRA']",2.0,Electric regional aircraft,75.0,1.0,96.0,0.7916666666666666
+56,LIRA,LIRN,"['LIRA', 'LIRN', 'LICA', 'LIRA']",2.0,Electric regional aircraft,0.0,76.0,96.0,0.7916666666666666
+57,LIRN,LICA,"['LIRA', 'LIRN', 'LICA', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+58,LICA,LIRA,"['LIRA', 'LIRN', 'LICA', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+59,LIRA,LIBP,"['LIRA', 'LIBP', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,33.0,5.0,48.0,0.7916666666666666
+60,LIBP,LIRQ,"['LIRA', 'LIBP', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,38.0,0.0,48.0,0.7916666666666666
+61,LIRQ,LIRA,"['LIRA', 'LIBP', 'LIRQ', 'LIRA']",1.0,Electric regional aircraft,0.0,38.0,48.0,0.7916666666666666
+62,LIRA,LIBP,"['LIRA', 'LIBP', 'LIRN', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+63,LIBP,LIRN,"['LIRA', 'LIBP', 'LIRN', 'LIRA']",2.0,Electric regional aircraft,76.0,0.0,96.0,0.7916666666666666
+64,LIRN,LIRA,"['LIRA', 'LIBP', 'LIRN', 'LIRA']",2.0,Electric regional aircraft,0.0,76.0,96.0,0.7916666666666666
+65,LIRA,LIPX,"['LIRA', 'LIPX', 'LIRQ', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+66,LIPX,LIRQ,"['LIRA', 'LIPX', 'LIRQ', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+67,LIRQ,LIRA,"['LIRA', 'LIPX', 'LIRQ', 'LIRA']",1.0,Regional Turboprop,0.0,36.0,45.0,0.8
+68,LIRA,LIPX,"['LIRA', 'LIPX', 'LIPE', 'LIRA']",3.0,Regional Turboprop,108.0,0.0,135.0,0.8
+69,LIPX,LIPE,"['LIRA', 'LIPX', 'LIPE', 'LIRA']",3.0,Regional Turboprop,108.0,0.0,135.0,0.8
+70,LIPE,LIRA,"['LIRA', 'LIPX', 'LIPE', 'LIRA']",3.0,Regional Turboprop,108.0,0.0,135.0,0.8
+71,LIRA,LICA,"['LIRA', 'LICA', 'LIRN', 'LIRA']",2.0,Regional Turboprop,42.0,30.0,90.0,0.8
+72,LICA,LIRN,"['LIRA', 'LICA', 'LIRN', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+73,LIRN,LIRA,"['LIRA', 'LICA', 'LIRN', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+74,LIRA,LICA,"['LIRA', 'LICA', 'LICC', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+75,LICA,LICC,"['LIRA', 'LICA', 'LICC', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+76,LICC,LIRA,"['LIRA', 'LICA', 'LICC', 'LIRA']",1.0,Regional Turboprop,32.0,4.0,45.0,0.8
+77,LIRA,LICC,"['LIRA', 'LICC', 'LICJ', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+78,LICC,LICJ,"['LIRA', 'LICC', 'LICJ', 'LIRA']",2.0,Regional Turboprop,72.0,0.0,90.0,0.8
+79,LICJ,LIRA,"['LIRA', 'LICC', 'LICJ', 'LIRA']",2.0,Regional Turboprop,64.0,8.0,90.0,0.8
+80,LIRA,LICC,"['LIRA', 'LICC', 'LICA', 'LIRA']",1.0,Regional Turboprop,32.0,4.0,45.0,0.8
+81,LICC,LICA,"['LIRA', 'LICC', 'LICA', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+82,LICA,LIRA,"['LIRA', 'LICC', 'LICA', 'LIRA']",1.0,Regional Turboprop,2.0,34.0,45.0,0.8
+83,LIRA,LIMJ,"['LIRA', 'LIMJ', 'LIRQ', 'LIRA']",3.0,Electric regional aircraft,106.0,9.0,144.0,0.7986111111111112
+84,LIMJ,LIRQ,"['LIRA', 'LIMJ', 'LIRQ', 'LIRA']",3.0,Electric regional aircraft,115.0,0.0,144.0,0.7986111111111112
+85,LIRQ,LIRA,"['LIRA', 'LIMJ', 'LIRQ', 'LIRA']",3.0,Electric regional aircraft,70.0,45.0,144.0,0.7986111111111112
+86,LIRA,LIPQ,"['LIRA', 'LIPQ', 'LIPZ', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+87,LIPQ,LIPZ,"['LIRA', 'LIPQ', 'LIPZ', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+88,LIPZ,LIRA,"['LIRA', 'LIPQ', 'LIPZ', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+89,LIRA,LIPQ,"['LIRA', 'LIPQ', 'LIPE', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+90,LIPQ,LIPE,"['LIRA', 'LIPQ', 'LIPE', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+91,LIPE,LIRA,"['LIRA', 'LIPQ', 'LIPE', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+92,LIRA,LIPQ,"['LIRA', 'LIPQ', 'LIPX', 'LIRA']",1.0,Regional Turboprop,34.0,2.0,45.0,0.8
+93,LIPQ,LIPX,"['LIRA', 'LIPQ', 'LIPX', 'LIRA']",1.0,Regional Turboprop,36.0,0.0,45.0,0.8
+94,LIPX,LIRA,"['LIRA', 'LIPQ', 'LIPX', 'LIRA']",1.0,Regional Turboprop,30.0,6.0,45.0,0.8
