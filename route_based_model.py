@@ -208,12 +208,7 @@ class RouteBasedModel:
         result = pd.DataFrame(columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
                                        'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
 
-        # Create Subset of Flown Routes
-        final_routes_set = []
-        for r in self.R:
-            for k in self.K:
-                if z[r, k].X > 0:
-                    final_routes_set.append(r)
+        rpk = 0
 
         # Create List of Routes Flown
         for r in self.R:
@@ -248,6 +243,7 @@ class RouteBasedModel:
                         for k1 in self.K:
                             Capacity += self.s[k1] * z[r, k1].X
                         LF = (x_total + w_total) / Capacity
+                        rpk += (x_total + w_total) * self.d[i][j]
                         new_row = pd.DataFrame([[i, j, self.Route[r], z[r, k].X, k, x_total, w_total, Capacity, LF]],
                                                columns=['Origin', 'Destination', 'Route', 'Frequency', 'AC Type',
                                                         'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
@@ -271,6 +267,9 @@ class RouteBasedModel:
             print('Utilisation:', utilization, '%')
             print('Weekly Flights:', flights)
             print()
+        LF_Avg = result['LF'].mean()
+        print('Total RPK:', rpk)
+        print('AVG Load Factor:', LF_Avg)
         return result
 
 
