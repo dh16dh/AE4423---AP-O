@@ -1,6 +1,7 @@
 """
 This file contains the Parameters class that preprocesses parameters required from relevant data files to use in the
 linear programming models.
+This also contains the LegBasedModel class
 
 Dependencies:
 Requires pandas data handling
@@ -24,16 +25,30 @@ class Parameters:
                  demand_data="Groups_data/Group_17_Demand.csv",
                  distance_data="Groups_data/Group_17_Distances.csv",
                  annual_growth="Groups_data/Group_17_Annual_growth.csv"):
+        """
+        This class preprocesses data from the relevant CSV files into a usable format for the two mathematical LP models
+
+        :param aircraft_data: Optional path to the aircraft data CSV
+        :param airport_data: Optional path to the airport data CSV
+        :param demand_data: Optional path to the 2020 demand data CSV
+        :param distance_data: Optional path to the distance data CSV
+        :param annual_growth: Optional path to the annual growth data CSV
+        """
+        # Reads aircraft and airport data
         self.aircraft_data = pd.read_csv(aircraft_data, index_col=0)
         self.airport_data = pd.read_csv(airport_data, index_col=1)
 
+        # Passes CSV path information to DemandForecast class to calibrate demand forecast model
         forecast_model = DemandForecast(airport_data, demand_data, distance_data, annual_growth)
         forecast_model.calibrate()
 
+        # Create binary variable list for the g value to check for the hub airport
         zero_list = list(1 for i in range(len(self.airport_data)))
         zero_list[0] = 0
+        # Create list for the block time for all aircraft types
         bt_list = list(10 for i in range(len(self.aircraft_data)))
 
+        # Set various callable parameters for use in the LP models.
         self.fuel_cost_usdgal = 1.42
         self.demand_matrix = forecast_model.forecast_demand()
         self.g_values = pd.Series(zero_list, index=self.airport_data.index, name='g value')
@@ -61,9 +76,16 @@ class Parameters:
 
 class LegBasedModel:
     def __init__(self):
-        self.parameter_set = Parameters()
+        """
+        The LegBasedModel class contains all the code for creating, optimising and visualising the leg-based fleet
+        network model.
 
-        # Airport Lookup DB
+        The network_fleet_model() function which creates, optimises and returns final network.
+
+        The plot_routes() function visualises the final network on a map.
+        """
+        # Call Parameter class to extract and assign variables
+        self.parameter_set = Parameters()
 
         # Define Sets
         self.N = self.parameter_set.airport_data.index.to_list()
@@ -72,6 +94,7 @@ class LegBasedModel:
         # Define Revenue Parameters
         self.Yield = self.parameter_set.yield_matrix.replace(np.inf, 0)  # ij
         self.d = self.parameter_set.distance_matrix  # ij
+
         # Define Cost Parameters
         self.C_Lk = self.parameter_set.lease_cost  # k
         self.C_Xk = self.parameter_set.operating_cost  # k
@@ -90,7 +113,7 @@ class LegBasedModel:
         self.AP_rwy = self.parameter_set.AP_rwy  # i/j
         self.AC_rwy = self.parameter_set.AC_rwy  # k
 
-        # Create binary matrix for range constraint
+        # Create binary matrix (dict) for range constraint
         self.a = {}
         for i in self.N:
             for j in self.N:
@@ -99,7 +122,7 @@ class LegBasedModel:
                         self.a[i, j, k] = 1
                     else:
                         self.a[i, j, k] = 0
-        # Create binary matrix for runway constraint
+        # Create binary matrix (dict) for runway constraint
         self.rwy = {}
         for i in self.N:
             for k in self.K:
@@ -159,7 +182,7 @@ class LegBasedModel:
         fig.show()
 
     def network_fleet_model(self):
-
+        # Initialise gurobipy model
         model = Model("NFM")
 
         # Define Decision Variables
@@ -219,6 +242,7 @@ class LegBasedModel:
         elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
             print('Optimization was stopped with status %d' % status)
 
+        # Create empty result dataframe to append results to
         result = pd.DataFrame(columns=['Origin', 'Destination', 'Frequency', 'AC Type',
                                        'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
 
@@ -236,14 +260,14 @@ class LegBasedModel:
                                 w_total += w[i, m].X
                         Capacity = 0
                         for k1 in self.K:
-                            Capacity += self.s[k1]*z[i, j, k1].X
+                            Capacity += self.s[k1] * z[i, j, k1].X
                         LF = (x[i, j].X + w_total) / Capacity
                         new_row = pd.DataFrame([[i, j, z[i, j, k].X, k, x[i, j].X, w_total, Capacity, LF]],
                                                columns=['Origin', 'Destination', 'Frequency', 'AC Type',
                                                         'Direct Flow', 'Transfer Flow', 'Capacity', 'LF'])
                         result = pd.concat([result, new_row], ignore_index=True)
         # KPIs
-        # Print fleet composition
+        # Print fleet composition and calculate utilisation and weekly flights per AC type
         print('Fleet')
         for k in self.K:
             print(k)
@@ -257,10 +281,12 @@ class LegBasedModel:
                     flight_hrs = z[i, j, k].X * (self.d[i][j] / self.sp[k] + self.LTO[k] * (1 + 0.5 * (1 - self.g[j])))
                     hours += flight_hrs
                     flights += z[i, j, k].X
-            utilization = hours/block_time * 100
+            utilization = hours / block_time * 100
             print('Utilisation:', utilization, '%')
             print('Weekly Flights:', flights)
             print()
+        # Calculate the total RPK to give an indication of the number of passengers and distance flown as well as the
+        # average load factor of all legs (adds all passengers and divides by available seats)
         rpk = 0
         LF = []
         for i in self.N:
@@ -279,15 +305,13 @@ class LegBasedModel:
                         for m in self.N:
                             pax_w += w[i, m].X
                     pax += pax_w
-                    routeLF = pax/seats
+                    routeLF = pax / seats
                     LF.append(routeLF)
                 if w[i, j].X > 0:
                     rpk += w[i, j].X * (self.d[i]['LIRA'] + self.d['LIRA'][j])
 
         print('Total RPK:', rpk)
         print('AVG Load Factor', np.mean(LF))
-
-
 
         return result
 
