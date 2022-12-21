@@ -1,5 +1,6 @@
 """
-Demand forecast for future demand.
+Demand forecast for future demand. This class handles all preprocessing of the data into the relevant parts, and then
+calibrates the gravity model.
 
 @author: David Hartong
 """
@@ -30,6 +31,8 @@ class DemandForecast:
         :type distance_data: str
         :param annual_growth: Path to annual growth CSV
         :type annual_growth: str
+        :param years: The number of years to forecast into the future by from the year 2020. By default 10 years for 2030
+        :type years: int
         :param fuel_cost: Cost of fuel in USD/gallon. By default 1.42
         :type fuel_cost: float
         """
@@ -81,6 +84,7 @@ class DemandForecast:
         gdp_matrix = gdp_matrix.stack().values
         dst_matrix = dst_matrix.stack().values
 
+        # Update class property 'data' to include the processed data in linearised form (natural log values)
         self.data = pd.DataFrame(np.transpose([demand_log, pop_matrix, gdp_matrix, dst_matrix]),
                                  columns=['Demand', 'Population', 'GDP', 'Fuel_Dist'])
         self.data = self.data.replace([np.inf, -np.inf], np.nan).dropna()
@@ -97,14 +101,18 @@ class DemandForecast:
 
             Y = alpha + beta_1 * X1 + beta_2 * X2 + beta_3 * X3
         """
+        # Calls format_data() function to ensure data is processed correctly
         self.format_data()
 
+        # Separate data into Y value and X values
         Y = self.data['Demand']
         X = self.data[['Population', 'GDP', 'Fuel_Dist']]
         X = sms.add_constant(X)
 
+        # Apply OLS to linearised model
         est = sms.OLS(Y, X).fit()
 
+        # Extract calibration parameters from OLS fit
         params = est.params
 
         self.K = np.exp(params['const'])
@@ -113,26 +121,45 @@ class DemandForecast:
         self.b3 = params['Fuel_Dist']
 
     def gravity_model(self, data, i, j):
+        """
+        The (non-linear) gravity model function to compute demand using population, GDP, fuel cost, and distance between
+        airports i and j.
+
+
+        :param data: The forecasted data needed for the gravity model including population and GDP for target year
+        :type data: pandas.DataFrame
+        :param i: ICAO code for airport i
+        :type i: str
+        :param j: ICAO code for airport j
+        :type j: str
+        :return: Returns forecasted demand between airport i and j
+        """
         demand = self.K * (data["Population"][i] * data["Population"][j]) ** self.b1 \
                  * (data["GDP"][i] * data["GDP"][j]) ** self.b2 / (self.fuel_cost * self.distance_data[i][j]) ** self.b3
         return demand
 
     def forecast_demand(self):
+        # Performs check to see if model has been calibrated and if calibration parameters are non-zero.
         params = [self.K, self.b1, self.b2, self.b3]
         if all(param == 0 for param in params):
             print("=== Calibrating Model ===")
             self.calibrate()
             print("Parameters Calibrated")
             print("K :", self.K, "\nb1:", self.b1, "\nb2:", self.b2, "\nb3:", self.b3)
+
+        # Creates copy of original airport data to perform annual growth calculation for the population
         forecasted_data = self.airport_data.copy()
         forecasted_data["Population"] = forecasted_data["Population"] * self.annual_growth ** self.years
 
         airport_names = self.airport_data.index.to_list()
 
+        # Creates empty DataFrame with ICAO codes of airports as column and index
         forecasted_demand = pd.DataFrame(columns=airport_names, index=airport_names)
 
+        # Applies gravity_model() function to calculate forecasted demand for all airport combinations
         for i in airport_names:
             for j in airport_names:
+                # Skips demand calculation if airports i and j are the same and sets demand to 0
                 if i == j:
                     forecasted_demand[i][j] = 0
                     continue
@@ -151,4 +178,5 @@ if __name__ == '__main__':
     forecast_demand = demand_model.forecast_demand()
     print(forecast_demand)
 
+    # Saves demand as a CSV file to the root directory
     forecast_demand.to_csv('Demand_2030.csv')

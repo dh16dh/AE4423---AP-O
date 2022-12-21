@@ -188,7 +188,6 @@ class RouteBasedModel:
 
         model.update()
 
-        # model.setParam('MIPGap', 0.02)  # Set satisfactory solution within 2% of upper bound optimal solution
         model.setParam('Timelimit', 900)  # Set Timeout limit to 15 minutes
 
         model.optimize()
