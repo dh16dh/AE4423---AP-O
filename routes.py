@@ -1,3 +1,7 @@
+"""
+
+"""
+
 # Import relevant modules
 from leg_based_model import Parameters
 import numpy as np

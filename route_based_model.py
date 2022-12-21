@@ -1,11 +1,24 @@
+"""
+File contains the RouteBasedModel class. Requires the Parameters class from leg_based_model.py and pre-processed routes
+from the routes.py file
+
+Dependencies:
+Requires pandas data handling
+Requires gurobipy for solution
+Requires plotly for route map creation
+Requires kaleido to export route map
+
+@author: tijmengodeke
+@author: swijnands97
+@author: davidahartong
+"""
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from gurobipy import Model, GRB, LinExpr, quicksum, read
-from demand_forecast import DemandForecast
+from gurobipy import Model, GRB, LinExpr, quicksum
 from leg_based_model import Parameters
 from routes import routes
-from os import path
 
 
 class RouteBasedModel:
