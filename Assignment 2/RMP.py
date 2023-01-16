@@ -24,16 +24,29 @@ class RMP:
         
         
         self.d = 0 # distance of flight i [i]
-        self.ack = 0 # number of aircraft in fleet of type k [k]
+        self.ac = 0 # number of aircraft in fleet of type k [k]
         self.cost = 0 # operating cost of AC type k for flight i [i, k]
         self.s = 0 # number of seats for aircraft type k [k]
-        self.fare = 0 # average fare for itineray p [p]     
+        self.fare = 0 # average fare for itineray p [p]   
+        
+        self.D = 0 # daily unconstrained demand for itinerary p [p]
+        self.Q = 0 # daily unconstrained demand on flight (leg) i [i]
+        
+        self.b = 0 # recapture rate of a pax that desired itinerary p and is allocated to r
+        
+        
+        # Create binary matrix (dict) for flight leg as part of itinerary
+        self.delta = {}
+        for i in self.L:
+            
+            if i in p:    
+                self.delta[i, p] = 1
+            
+            else:
+                self.delta[i, p] = 0
         
     
-        self.d = self.parameter_set.distance_matrix # i
-        self.s = self.parameter_set.seat_list # k
-        
-        
+    
     def rmp_model(self):
         # Initialise gurobipy model
         model = Model("RMP")
@@ -66,7 +79,7 @@ class RMP:
         
         for cut in self.TC:
             for k in self.K:
-                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NGk) <= self.ack, name='C3')
+                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NGk) <= self.ac, name='C3')
         
         for i in self.L:
             model.addConstr(quicksum(self.s[k] * f[i, k] for k in self.K) + 
