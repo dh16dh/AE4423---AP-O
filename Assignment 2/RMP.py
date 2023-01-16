@@ -10,46 +10,38 @@ class RMP:
         self.parameter_set = Parameters()
         
         # Define Sets
-        self.N = self.parameter_set.airport_data.index.to_list()
-        self.K = self.parameter_set.aircraft_data.index.to_list()
-        self.F = 0
-        self.Gk = 0
-        self.P = 0
-        self.Pp = 0
-        self.NGk = 0
-        self.O = 0
-        self.I = 0
-        self.ni = 0
-        self.nf = 0
+        self.N = 0 # set of airports
+        self.K = 0 # set of aircraft types
+        self.L = 0 # set of flights
+        self.P = 0 # set of all passenger itineraries (paths)
+        self.Gk = 0 # set of ground arcs
+        self.TC = 0 # set of unique time cuts
+        self.NGk = 0 # set of flight and ground arcs intercepted by the time cut
+        self.O = 0 # flight arcs originating at node n in fleet k
+        self.I = 0 # flight arcs terminiating at node n in fleet k
+        self.ni = 0 # ground arcs originating at any node n
+        self.nf = 0 # ground arcs terminating at any node n
         
         
+        self.d = 0 # distance of flight i [i]
+        self.ack = 0 # number of aircraft in fleet of type k [k]
+        self.cost = 0 # operating cost of AC type k for flight i [i, k]
+        self.s = 0 # number of seats for aircraft type k [k]
+        self.fare = 0 # average fare for itineray p [p]     
         
-        
-        # Fares
-        
-        
-        
-        # Define Cost Parameters
-        self.Cost = 0 # k, i
-        
-        
-        
-        # Define Constraint Parameters
-        
+    
         self.d = self.parameter_set.distance_matrix # i
         self.s = self.parameter_set.seat_list # k
         
         
-      
     def rmp_model(self):
         # Initialise gurobipy model
         model = Model("RMP")
         
         # Define Decision Variables
-        f = {}
-        y = {}
-        x = {}
-        
+        f = {} # 1 if flight arc i is assigned to aircraft type k, 0 otherwise [i, k]
+        y = {} # number of aircraft of type k on the ground arc a [a, k]
+        t = {} # number of passengers that would like to travel on itinerary p and are reallocated to iternary r [p, r]
         
         # Add Variables to Objective Function
         for i in self.L:
@@ -58,22 +50,32 @@ class RMP:
         
         for p in self.P:
             for r in self.P:
-                pass
+                t[p, r] = model.addVar(obj=fare[p] - (b[p, r] * fare[r]), vtype=GRB.INTEGER)
         
         model.update()
         model.setObjective(model.getObjective(), GRB.MINIMIZE)
                 
-        
-                
+                 
         # Define Constraints
         for i in self.L:
             model.addConstr(quicksum(f[i, k] for k in self.K) == 1, name='C1')
-            
+          
+        for n in self.Nk:
+            for k in self.K:
+                model.addConstr(y[n, k] + quicksum(f[i, k] - y[n, k] for i in self.O) - quicksum(f[i, k] for i in self.I) == 0, name='C4')   
+        
+        for cut in self.TC:
+            for k in self.K:
+                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NGk) <= self.ack, name='C3')
+        
+        for i in self.L:
+           
         
         
-        for k in self.K:
-            model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NGk), name='C3')
-            
+        
+        for p in self.P:
+            model.addConstr(quicksum(t[p, r] for r in self.P) <= self.D[p], name='C5')
+        
         
         
         model.update()
