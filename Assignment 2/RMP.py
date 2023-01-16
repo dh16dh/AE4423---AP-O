@@ -62,21 +62,19 @@ class RMP:
           
         for n in self.Nk:
             for k in self.K:
-                model.addConstr(y[n, k] + quicksum(f[i, k] - y[n, k] for i in self.O) - quicksum(f[i, k] for i in self.I) == 0, name='C4')   
+                model.addConstr(y[n, k] + quicksum(f[i, k] - y[n, k] for i in self.O) - quicksum(f[i, k] for i in self.I) == 0, name='C2')   
         
         for cut in self.TC:
             for k in self.K:
                 model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NGk) <= self.ack, name='C3')
         
         for i in self.L:
+            model.addConstr(quicksum(self.s[k] * f[i, k] for k in self.K) + 
+                            quicksum(quicksum(delta[i, p] * t[p, r] for p in self.P) for r in self.P) - 
+                            quicksum(quicksum(delta[i, p] * b[r, p] * t[r, p] for p in self.P) for r in self.P) > Q[i], name='C4')
            
-        
-        
-        
         for p in self.P:
             model.addConstr(quicksum(t[p, r] for r in self.P) <= self.D[p], name='C5')
-        
-        
         
         model.update()
 
@@ -93,6 +91,8 @@ class RMP:
 
         elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
             print('Optimization was stopped with status %d' % status)
-         
 
 
+
+if __name__ == '__main__':
+    pass
