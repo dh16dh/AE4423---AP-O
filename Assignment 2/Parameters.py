@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from itertools import product
 import time
-
+import pickle
 
 def get_sec(time_str):
     """
@@ -49,7 +49,6 @@ class Parameters:
 
         self.ICAO = self.flight_data['ORG'].unique()
         self.K = self.aircraft_data['Type']
-        self.L = self.flight_data['Flight Number']
         self.P = self.itinerary_data['Itin No.']
 
         destination_nodes = self.flight_data.drop(columns=['ORG', 'Departure']).rename(columns={'DEST': 'ICAO',
@@ -102,9 +101,42 @@ class Parameters:
             time_cut = np.mean([time_list[i], time_list[i+1]])
             self.TC.append(time_cut)
 
-        print(self.flight_data)
+        self.L = dict()
+
+        for k in self.K:
+            filtered = self.flight_data[self.flight_data[k] < 1000000].drop(columns=['A330', 'A340',
+                                                                                     'B737', 'B738', 'BUS'])
+            arcs = list(zip(filtered['Flight Number'] + 'o', filtered['Flight Number'] + 'i'))
+            self.L[k] = arcs
+
+        self.NG = dict()
+
+        for k in self.K:
+            for t in self.TC:
+                list_of_arcs_at_tc = []
+                for ground_arc in self.G[k]:
+                    time_node1 = all_nodes['Time'][ground_arc[0]]
+                    time_node2 = all_nodes['Time'][ground_arc[1]]
+                    if time_node1 < time_node2:
+                        if time_node1 < t < time_node2:
+                            list_of_arcs_at_tc.append(ground_arc)
+                    elif time_node1 > time_node2:
+                        if time_node1 < t or time_node2 > t:
+                            list_of_arcs_at_tc.append(ground_arc)
+                for flight_arc in self.L[k]:
+                    time_node1 = all_nodes['Time'][flight_arc[0]]
+                    time_node2 = all_nodes['Time'][flight_arc[1]]
+                    if time_node1 < time_node2:
+                        if time_node1 < t < time_node2:
+                            list_of_arcs_at_tc.append(flight_arc)
+                    elif time_node1 > time_node2:
+                        if time_node1 < t or time_node2 > t:
+                            list_of_arcs_at_tc.append(flight_arc)
+                self.NG[k, t] = list_of_arcs_at_tc
+
 
 
 if __name__ == "__main__":
     parameters = Parameters()
-    # print(parameters.G)
+    with open('NG.pickle', 'wb') as handle:
+        pickle.dump(parameters.NG, handle, protocol=pickle.HIGHEST_PROTOCOL)
