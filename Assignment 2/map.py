@@ -5,17 +5,32 @@ import plotly.graph_objects as go
 
 flight_data = pd.read_csv('Assignment 2/Group_data_17/Flight_data.csv', sep=';')
 database = pd.read_csv('Assignment 2/AirportDB.csv', index_col=0)
+ICAO = flight_data['ORG'].unique()
+ICAO_long = []
+ICAO_lat = []
+
+for i in ICAO:
+    ICAO_long.append(database['longitude'].loc[i])
+    ICAO_lat.append(database['latitude'].loc[i])
 
 
-def plot_routes(flight_data, database):
+def plot_routes(flight_data, database, ICAO_long, ICAO_lat):
     # airport_data = self.parameter_set.airport_data
     fig = go.Figure(data=go.Scattergeo())
 
+    # Europe
     fig.update_geos(showcountries=True,
                     showsubunits=True,
-                    lataxis_range=[36, 48],
-                    lonaxis_range=[6, 20],
+                    lataxis_range=[35, 60],
+                    lonaxis_range=[-11, 30],
                     resolution=50)
+    
+    # World
+    # fig.update_geos(showcountries=True,
+    #                 showsubunits=True,
+    #                 lataxis_range=[-40, 75],
+    #                 lonaxis_range=[-130, 150],
+    #                 resolution=50)
 
     # Add Routes
     for i in range(len(flight_data.index)):
@@ -31,17 +46,17 @@ def plot_routes(flight_data, database):
             )
         ))
 
-    # Add airports:
-    # fig.add_trace(go.Scattergeo(
-    #     lon=airport_data['Longitude (deg)'],
-    #     lat=airport_data['Latitude (deg)'],
-    #     text=airport_data['City Name'],
-    #     mode='markers',
-    #     marker=dict(
-    #         size=5,
-    #         color='red'
-    #     )
-    # ))
+    #Add Airports:
+    fig.add_trace(go.Scattergeo(
+        lon=ICAO_long,
+        lat=ICAO_lat,
+        #text=airport_data['City Name'],
+        mode='markers',
+        marker=dict(
+            size=5,
+            color='red'
+        )
+    ))
     # fig.add_trace(go.Scattergeo(
     #     lon=[airport_data.loc['LIRA']['Longitude (deg)']],
     #     lat=[airport_data.loc['LIRA']['Latitude (deg)']],
@@ -56,6 +71,6 @@ def plot_routes(flight_data, database):
     #fig.write_image('Network Map.svg')
     fig.show()
 
-plot_routes(flight_data, database)
+plot_routes(flight_data, database, ICAO_long, ICAO_lat)
 
 
