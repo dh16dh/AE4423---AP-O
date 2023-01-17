@@ -30,13 +30,13 @@ def get_hhmmss(time_int):
 
 class Parameters:
     def __init__(self,
-                 aircraft_data=os.getcwd() + '/Group_data_17/Aircraft_data.csv',
-                 flight_data=os.getcwd() + 'Group_data_17/Flight_data.csv',
-                 itinerary_data=os.getcwd() + 'Group_data_17/Itinerary_data.csv',
-                 new_flight_data=os.getcwd() + 'Group_data_17/New_flight_data.csv',
-                 new_itinerary_data=os.getcwd() + 'Group_data_17/New_itinerary_data.csv',
-                 optional_flight_data=os.getcwd() + 'Group_data_17/Optional_flight_data.csv',
-                 recapture_rate=os.getcwd() + 'Group_data_17/Recapture_rate.csv'
+                 aircraft_data='Group_data_17/Aircraft_data.csv',
+                 flight_data='Group_data_17/Flight_data.csv',
+                 itinerary_data='Group_data_17/Itinerary_data.csv',
+                 new_flight_data='Group_data_17/New_flight_data.csv',
+                 new_itinerary_data='Group_data_17/New_itinerary_data.csv',
+                 optional_flight_data='Group_data_17/Optional_flight_data.csv',
+                 recapture_rate='Group_data_17/Recapture_rate.csv'
                  ):
 
         self.aircraft_data = pd.read_csv(aircraft_data, sep=';', index_col=0)
