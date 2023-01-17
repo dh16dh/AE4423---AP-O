@@ -9,6 +9,7 @@ ICAO = flight_data['ORG'].unique()
 ICAO_long = []
 ICAO_lat = []
 
+
 for i in ICAO:
     ICAO_long.append(database['longitude'].loc[i])
     ICAO_lat.append(database['latitude'].loc[i])
@@ -57,16 +58,16 @@ def plot_routes(flight_data, database, ICAO_long, ICAO_lat):
             color='red'
         )
     ))
-    # fig.add_trace(go.Scattergeo(
-    #     lon=[airport_data.loc['LIRA']['Longitude (deg)']],
-    #     lat=[airport_data.loc['LIRA']['Latitude (deg)']],
-    #     text=airport_data['City Name']['LIRA'],
-    #     mode='markers',
-    #     marker=dict(
-    #         size=10,
-    #         color='blue'
-    #     )
-    # ))
+    fig.add_trace(go.Scattergeo(
+        lon=[database['longitude'].loc['LIMC'], database['longitude'].loc['LIME']],
+        lat=[database['latitude'].loc['LIMC'], database['latitude'].loc['LIME']],
+        #text=airport_data['City Name']['LIRA'],
+        mode='markers',
+        marker=dict(
+            size=10,
+            color='blue'
+        )
+    ))
     fig.update_layout(showlegend=False)
     #fig.write_image('Network Map.svg')
     fig.show()
