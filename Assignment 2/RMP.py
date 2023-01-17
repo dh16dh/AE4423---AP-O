@@ -10,42 +10,31 @@ class RMP:
         self.parameter_set = Parameters()
         
         # Define Sets
-        self.N = 0 # set of airports
-        self.K = 0 # set of aircraft types
-        self.L = 0 # set of flights
-        self.P = 0 # set of all passenger itineraries (paths)
-        self.Gk = 0 # set of ground arcs
-        self.TC = 0 # set of unique time cuts
-        self.NGk = 0 # set of flight and ground arcs intercepted by the time cut
-        self.O = 0 # flight arcs originating at node n in fleet k
-        self.I = 0 # flight arcs terminiating at node n in fleet k
-        self.ni = 0 # ground arcs originating at any node n
-        self.nf = 0 # ground arcs terminating at any node n
+        self.N = self.parameter_set.N  # set of nodes  [k]
+        self.N_O = self.parameter_set.N_O  # set of outbound nodes  [k]
+        self.N_I = self.parameter_set.N_I  # set of inbound nodes  [k]
+        self.K = self.parameter_set.K  # set of aircraft types
+        self.L = self.parameter_set.F  # set of flights
+        self.P = self.parameter_set.P  # set of all passenger itineraries (paths)
+        self.Gk = self.parameter_set.G  # set of ground arcs  [k]
+        self.TC = self.parameter_set.TC  # set of unique time cuts   [k]
+        self.NGk = self.parameter_set.NG  # set of flight and ground arcs intercepted by the time cut  [k, tc]
+        self.O = self.parameter_set.O  # flight arcs originating at node n in fleet k   [k, n] n in N_O
+        self.I = self.parameter_set.I  # flight arcs terminating at node n in fleet k   [k, n] n in N_I
+        self.ni = self.parameter_set.n_plus  # ground arcs originating at any node n    n+[k, n]
+        self.nf = self.parameter_set.n_minus  # ground arcs terminating at any node n   n-[k, n]
+
+        self.ac = self.parameter_set.AC  # number of aircraft in fleet of type k   [k]
+        self.cost = self.parameter_set.c  # operating cost of AC type k for flight i   .loc[i, k]
+        self.s = self.parameter_set.s  # number of seats for aircraft type k   [k]
+        self.fare = self.parameter_set.fare  # average fare for itinerary p   [p]
         
+        self.D = self.parameter_set.D  # daily unconstrained demand for itinerary p   [p]
+        self.Q = self.parameter_set.Q  # daily unconstrained demand on flight (leg) i   [i]
         
-        self.d = 0 # distance of flight i [i]
-        self.ac = 0 # number of aircraft in fleet of type k [k]
-        self.cost = 0 # operating cost of AC type k for flight i [i, k]
-        self.s = 0 # number of seats for aircraft type k [k]
-        self.fare = 0 # average fare for itineray p [p]   
-        
-        self.D = 0 # daily unconstrained demand for itinerary p [p]
-        self.Q = 0 # daily unconstrained demand on flight (leg) i [i]
-        
-        self.b = 0 # recapture rate of a pax that desired itinerary p and is allocated to r
-        
-        
-        # Create binary matrix (dict) for flight leg as part of itinerary
-        self.delta = {}
-        for i in self.L:
-            
-            if i in p:    
-                self.delta[i, p] = 1
-            
-            else:
-                self.delta[i, p] = 0
-        
-    
+        self.b = self.parameter_set.b  # recapture rate of a pax that desired itinerary p and is allocated to r   .loc[p, r]
+        self.delta = self.parameter_set.delta  # if flight i is in itinerary p [i, p]
+
     
     def rmp_model(self):
         # Initialise gurobipy model
