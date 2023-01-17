@@ -30,7 +30,7 @@ def get_hhmmss(time_int):
 
 class Parameters:
     def __init__(self,
-                 aircraft_data='Group_data_17/Aircraft_data.csv',
+                 aircraft_data=os.path.join(os.getcwd(), 'Group_data_17', 'Aircraft_data.csv'),
                  flight_data='Group_data_17/Flight_data.csv',
                  itinerary_data='Group_data_17/Itinerary_data.csv',
                  new_flight_data='Group_data_17/New_flight_data.csv',
