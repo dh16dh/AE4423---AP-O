@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from gurobipy import Model, GRB, LinExpr, quicksum
-import Parameters
+from Parameters import Parameters
 
 class RMP:
     def __init__(self):
