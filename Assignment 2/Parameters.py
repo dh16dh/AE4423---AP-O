@@ -39,104 +39,168 @@ class Parameters:
                  recapture_rate='Group_data_17/Recapture_rate.csv'
                  ):
 
-        self.aircraft_data = pd.read_csv(aircraft_data, sep=';')
-        self.flight_data = pd.read_csv(flight_data, sep=';')
+        self.aircraft_data = pd.read_csv(aircraft_data, sep=';', index_col=0)
+        self.flight_data = pd.read_csv(flight_data, sep=';', index_col=0)
         self.itinerary_data = pd.read_csv(itinerary_data, sep=';')
         self.new_flight_data = pd.read_csv(new_flight_data, sep=';')
         self.new_itinerary_data = pd.read_csv(new_itinerary_data, sep=';')
         self.optional_flight_data = pd.read_csv(optional_flight_data, sep=';')
         self.recapture_rate = pd.read_csv(recapture_rate, sep=';')
 
+        # Define basic parameters from imported data including list of unique airports, AC type, itineraries,
+        # and flight numbers
         self.ICAO = self.flight_data['ORG'].unique()
-        self.K = self.aircraft_data['Type']
+        self.K = self.aircraft_data.index
         self.P = self.itinerary_data['Itin No.']
+        self.F = self.flight_data.index
 
+        # # Create Flight Arcs, such that Fl.No. is the index
+        # self.Flight_Arcs = self.flight_data.copy()
+        # self.Flight_Arcs = self.Flight_Arcs.set_index(['Flight Number'])
+        # self.d = self.Flight_Arcs['']
+
+        self.AC = self.aircraft_data['Units']
+        self.s = self.aircraft_data['Seats']
+        self.TAT = self.aircraft_data['TAT']
+
+        # Convert departure and arrival times into seconds (int)
+        self.flight_data['Departure'] = self.flight_data['Departure'].map(get_sec)
+        self.flight_data['Arrival'] = self.flight_data['Arrival'].map(get_sec)
+
+        # Divide arrival and departure nodes into separate node sets
         destination_nodes = self.flight_data.drop(columns=['ORG', 'Departure']).rename(columns={'DEST': 'ICAO',
                                                                                                 'Arrival': 'Time'})
         origin_nodes = self.flight_data.drop(columns=['DEST', 'Arrival']).rename(columns={'ORG': 'ICAO',
                                                                                           'Departure': 'Time'})
         destination_nodes['Type'] = 'Inbound'
         origin_nodes['Type'] = 'Outbound'
-        destination_nodes['Flight Number'] = destination_nodes['Flight Number'] + 'i'
-        origin_nodes['Flight Number'] = origin_nodes['Flight Number'] + 'o'
+
+        destination_nodes = destination_nodes.reset_index().rename(columns={'index': 'Flight Number'})
+        origin_nodes = origin_nodes.reset_index().rename(columns={'index': 'Flight Number'})
+
+        # Combine arrival and departure nodes to create list of all nodes.
         all_nodes = pd.concat([destination_nodes, origin_nodes], ignore_index=True)
-        all_nodes['Time'] = all_nodes['Time'].map(get_sec)
-        for k in self.K:
-            all_nodes[k] = all_nodes[k] < 1000000
-        all_nodes = all_nodes.set_index(['Flight Number']).sort_index()
+        all_nodes['Index'] = all_nodes['ICAO']
+        all_nodes = all_nodes.set_index(['Index', 'Time']).sort_index()
 
-        self.N = list(all_nodes.index)
+        # Define set of all nodes, outbound nodes, inbound nodes, outbound flight arcs, inbound flight arcs
+        self.N = dict()
+        self.N_O = dict()
+        self.N_I = dict()
+        self.O = dict()
+        self.I = dict()
+        k_flights = dict()
+        k_outbound = dict()
+        k_inbound = dict()
+
+        # Determine set of all nodes, outbound nodes, inbound nodes for each AC type,
+        # and outbound/inbound DataFrames
+        for k in self.K:
+            filtered_flights = all_nodes[all_nodes[k] < 1000000]
+            self.N[k] = list(filtered_flights.index.unique())
+            k_flights[k] = filtered_flights
+
+            outbound_flights = filtered_flights[filtered_flights['Type'] == 'Outbound']
+            inbound_flights = filtered_flights[filtered_flights['Type'] == 'Inbound']
+
+            k_outbound[k] = outbound_flights
+            k_inbound[k] = inbound_flights
+
+            self.N_O[k] = list(outbound_flights.index.unique())
+            self.N_I[k] = list(inbound_flights.index.unique())
+
+        # Determine set of outbound and inbound flight arcs per node and per AC type
+        for k in self.K:
+            for n in self.N_O[k]:
+                df = k_outbound[k].loc[[n]]
+                flight_arc = list(df['Flight Number'])
+                self.O[k, n] = flight_arc
+            for n in self.N_I[k]:
+                df = k_inbound[k].loc[[n]]
+                flight_arc = list(df['Flight Number'])
+                self.I[k, n] = flight_arc
+
+        # Define set of ground links and set of ground links for DataFrame
         self.G = dict()
-
-        ground_links = []
-        for AP in self.ICAO:
-            ground_nodes = all_nodes[all_nodes['ICAO'] == AP]
-            outbound_nodes = ground_nodes[ground_nodes['Type'] == 'Outbound']
-            inbound_nodes = ground_nodes[ground_nodes['Type'] == 'Inbound']
-
-            node_combinations = list(product(inbound_nodes.index, outbound_nodes.index))
-            for nodes in node_combinations:
-                new_ground_link = {'Nodes': nodes,
-                                   'ICAO': AP,
-                                   'Time In': inbound_nodes.loc[nodes[0]]['Time'],
-                                   'Time Out': outbound_nodes.loc[nodes[1]]['Time'],
-                                   'A330': all(
-                                       [inbound_nodes.loc[nodes[0]]['A330'], outbound_nodes.loc[nodes[1]]['A330']]),
-                                   'A340': all(
-                                       [inbound_nodes.loc[nodes[0]]['A340'], outbound_nodes.loc[nodes[1]]['A340']]),
-                                   'B737': all(
-                                       [inbound_nodes.loc[nodes[0]]['B737'], outbound_nodes.loc[nodes[1]]['B737']]),
-                                   'B738': all(
-                                       [inbound_nodes.loc[nodes[0]]['B738'], outbound_nodes.loc[nodes[1]]['B738']]),
-                                   'BUS': all(
-                                       [inbound_nodes.loc[nodes[0]]['BUS'], outbound_nodes.loc[nodes[1]]['BUS']])}
-                ground_links.append(new_ground_link)
-        G = pd.DataFrame(ground_links).set_index('Nodes')
-        for k in self.K:
-            self.G[k] = list(G[G[k] == True].index)
-
-        time_list = np.unique([G['Time In'], G['Time Out']])
-        self.TC = [0]
-        for i in range(len(time_list)-1):
-            time_cut = np.mean([time_list[i], time_list[i+1]])
-            self.TC.append(time_cut)
-
-        self.L = dict()
+        ground_link_set = []
 
         for k in self.K:
-            filtered = self.flight_data[self.flight_data[k] < 1000000].drop(columns=['A330', 'A340',
-                                                                                     'B737', 'B738', 'BUS'])
-            arcs = list(zip(filtered['Flight Number'] + 'o', filtered['Flight Number'] + 'i'))
-            self.L[k] = arcs
+            gl_k_set = []
+            for ap in self.ICAO:
+                nodes_ap = [item for item in self.N[k] if item[0] == ap]
+                for i in range(len(nodes_ap)):
+                    node_1 = nodes_ap[i-1]
+                    node_2 = nodes_ap[i]
+                    ground_link = ap + str(node_1[1]) + '-' + str(node_2[1])
+                    new_gl = {'Ground Link': ground_link,
+                              'ICAO': ap,
+                              'T1': node_1[1],
+                              'T2': node_2[1],
+                              'Type': k}
+                    ground_link_set.append(new_gl)
+                    gl_k_set.append(ground_link)
+            self.G[k] = gl_k_set
+        self.Ground_Links = pd.DataFrame(ground_link_set).set_index(['Ground Link'])
 
+        print(self.Ground_Links)
+
+        # Define originating and terminating ground links sets
+        self.n_plus = dict()
+        self.n_minus = dict()
+
+        # Determine originating and terminating ground links for AC type and node
+        for k in self.K:
+            ground_links = self.Ground_Links[self.Ground_Links['Type'] == k]
+            for i in range(len(ground_links)):
+                node_plus = (ground_links.iloc[i][0], ground_links.iloc[i][1])
+                node_minus = (ground_links.iloc[i][0], ground_links.iloc[i][2])
+                self.n_plus[k, node_plus] = list(ground_links.index)[i]
+                self.n_minus[k, node_minus] = list(ground_links.index)[i]
+
+        # Define complete set of time cuts
+        self.TC = dict()
+
+        # Determine set of time cuts for each AC, based on median between each node + 0 for overnight links
+        for k in self.K:
+            time_list = []
+            for n in self.N[k]:
+                time_list.append(n[1])
+            unique_time_list = np.unique(np.sort(time_list))
+            TC_list = [0]
+            for i in range(len(unique_time_list)-1):
+                TC_time = np.median([unique_time_list[i], unique_time_list[i+1]])
+                TC_list.append(TC_time)
+            self.TC[k] = TC_list
+
+        # Define complete set of arcs per time cut per AC
         self.NG = dict()
 
+        # Determine set of ground links and flight arcs per time cut and per AC type
         for k in self.K:
-            for t in self.TC:
-                list_of_arcs_at_tc = []
-                for ground_arc in self.G[k]:
-                    time_node1 = all_nodes['Time'][ground_arc[0]]
-                    time_node2 = all_nodes['Time'][ground_arc[1]]
-                    if time_node1 < time_node2:
-                        if time_node1 < t < time_node2:
-                            list_of_arcs_at_tc.append(ground_arc)
-                    elif time_node1 > time_node2:
-                        if time_node1 < t or time_node2 > t:
-                            list_of_arcs_at_tc.append(ground_arc)
-                for flight_arc in self.L[k]:
-                    time_node1 = all_nodes['Time'][flight_arc[0]]
-                    time_node2 = all_nodes['Time'][flight_arc[1]]
-                    if time_node1 < time_node2:
-                        if time_node1 < t < time_node2:
-                            list_of_arcs_at_tc.append(flight_arc)
-                    elif time_node1 > time_node2:
-                        if time_node1 < t or time_node2 > t:
-                            list_of_arcs_at_tc.append(flight_arc)
-                self.NG[k, t] = list_of_arcs_at_tc
+            ground_links = self.Ground_Links[self.Ground_Links['Type'] == k]
+            flight_links = self.flight_data[self.flight_data[k] < 1000000]
+            for tc in self.TC[k]:
+                arcs = []
+                # Ground Links:
+                for i in range(len(ground_links)):
+                    t1 = ground_links.iloc[i][1]
+                    t2 = ground_links.iloc[i][2]
+                    if t1 < tc < t2:
+                        arcs.append(list(ground_links.index)[i])
+                    elif t1 > t2 and (tc > t1 or tc < t2):
+                        arcs.append(list(ground_links.index)[i])
+                # Flight Arcs:
+                for i in range(len(flight_links)):
+                    t1 = flight_links.iloc[i][3]
+                    t2 = flight_links.iloc[i][4]
+                    if t1 < tc < t2:
+                        arcs.append(flight_links.iloc[i][0])
+                    elif t1 > t2 and (tc > t1 or tc < t2):
+                        arcs.append(flight_links.iloc[i][0])
+                self.NG[k, tc] = arcs
 
-
+        print(self.NG)
 
 if __name__ == "__main__":
     parameters = Parameters()
-    with open('NG.pickle', 'wb') as handle:
-        pickle.dump(parameters.NG, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
