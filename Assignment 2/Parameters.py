@@ -135,13 +135,19 @@ class Parameters:
 
         # Determine set of outbound and inbound flight arcs per node and per AC type
         for k in self.K:
-            for n in self.N_O[k]:
-                df = k_outbound[k].loc[[n]]
-                flight_arc = list(df['Flight Number'])
+            for n in self.N[k]:
+                if n in self.N_O[k]:
+                    df = k_outbound[k].loc[[n]]
+                    flight_arc = list(df['Flight Number'])
+                else:
+                    flight_arc = []
                 self.O[k, n] = flight_arc
-            for n in self.N_I[k]:
-                df = k_inbound[k].loc[[n]]
-                flight_arc = list(df['Flight Number'])
+            for n in self.N[k]:
+                if n in self.N_I[k]:
+                    df = k_inbound[k].loc[[n]]
+                    flight_arc = list(df['Flight Number'])
+                else:
+                    flight_arc = []
                 self.I[k, n] = flight_arc
 
         # Define set of ground links and set of ground links for DataFrame
