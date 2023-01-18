@@ -62,11 +62,22 @@ class Parameters:
         self.D = self.itinerary_data['Demand']
         self.fare = self.itinerary_data['Fare']
 
-        itinerary_pairs = list(permutations(self.P, 2))
-        index = pd.MultiIndex.from_tuples(itinerary_pairs, names=('From Itinerary', 'To Itinerary'))
-        values = np.zeros(len(itinerary_pairs))
-        self.b = pd.DataFrame(values, columns=['Recapture Rate'], index=index)
-        self.b = self.recapture_rate.combine_first(self.b)  # to get recapture rate use self.b.loc[p, r]
+        # itinerary_pairs = list(permutations(self.P, 2))
+        # index = pd.MultiIndex.from_tuples(itinerary_pairs, names=('From Itinerary', 'To Itinerary'))
+        # values = np.zeros(len(itinerary_pairs))
+        # self.b = pd.DataFrame(values, columns=['Recapture Rate'], index=index)
+        # self.b = self.recapture_rate.combine_first(self.b)  # to get recapture rate use self.b.loc[p, r]
+
+        self.b = self.recapture_rate['Recapture Rate']
+        self.Pi = list(self.recapture_rate.index)
+
+        Pr = self.recapture_rate.groupby(level=0)
+        self.Pr = dict()
+        for name, group in Pr:
+            p_list = list(group.index.get_level_values(0))
+            r_list = list(group.index.get_level_values(1))
+            p = p_list[0]
+            self.Pr[p] = r_list
 
         demand_per_flight = []
         self.delta = dict()
@@ -83,8 +94,6 @@ class Parameters:
                           'Daily Demand': demand}
             demand_per_flight.append(new_flight)
         self.Q = pd.DataFrame(demand_per_flight).set_index(['Flight Number'])
-
-        print(int(self.Q.loc['AR1000']))
 
         # Convert departure and arrival times into seconds (int)
         self.flight_data['Departure'] = self.flight_data['Departure'].map(get_sec)

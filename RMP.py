@@ -14,7 +14,8 @@ class RMP:
         self.N = self.parameter_set.N  # set of nodes  [k]
         self.K = self.parameter_set.K  # set of aircraft types
         self.L = self.parameter_set.F  # set of flights
-        self.P = self.parameter_set.P  # set of all passenger itineraries (paths)
+        self.P = self.parameter_set.Pi  # set of all passenger itineraries (paths)
+        self.R = self.parameter_set.Pr
         self.G = self.parameter_set.G  # set of ground arcs  [k]
         self.TC = self.parameter_set.TC  # set of unique time cuts   [k]
         self.NG = self.parameter_set.NG  # set of flight and ground arcs intercepted by the time cut  [k, tc]
@@ -47,44 +48,45 @@ class RMP:
         for i in self.L:
             for k in self.K:
                 f[i, k] = model.addVar(obj=self.cost.loc[i, k], vtype=GRB.BINARY)
-                y[i, k] = model.addVar(ub=0, vtype=GRB.INTEGER)
+                y[i, k] = model.addVar(ub=0)
 
         for p in self.P:
-            for r in self.P:
-                if p == r:
-                    continue
-                t[p, r] = model.addVar(obj=self.fare[p] - (self.b.loc[p, r] * self.fare[r]), vtype=GRB.INTEGER)
+                t[p] = model.addVar(obj=self.fare[p[0]] - (self.b.loc[p] * self.fare[p[1]]), vtype=GRB.INTEGER)
 
         for k in self.K:
             for a in self.G[k]:
                 y[a, k] = model.addVar(vtype=GRB.INTEGER)
-                f[a, k] = model.addVar(ub=0, vtype=GRB.BINARY)
+                f[a, k] = model.addVar(ub=0)
 
         model.update()
         model.setObjective(model.getObjective(), GRB.MINIMIZE)
+        print("Objective Function Defined")
 
         # Define Constraints
         for i in self.L:
             model.addConstr(quicksum(f[i, k] for k in self.K) == 1, name='C1')
-
+        print("Added Constraint: C1")
         for k in self.K:
             for n in self.N[k]:
                 model.addConstr(
                     y[self.n_plus[k, n], k] + quicksum(f[i, k] for i in self.O[k, n]) - y[self.n_min[k, n], k] - quicksum(
                         f[i, k] for i in self.I[k, n]) == 0, name='C2')
-
+        print("Added Constraint: C2")
         for k in self.K:
             for tc in self.TC[k]:
                 model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, tc]) <= self.ac[k], name='C3')
-
+        print("Added Constraint: C3")
         for i in self.L:
-            model.addConstr(quicksum(self.s[k] * f[i, k] for k in self.K) +
-                            quicksum(self.delta[i, p] * t[p, r] for p in self.P for r in self.P if r != p) -
-                            quicksum(self.delta[i, p] * self.b.loc[r, p] * t[r, p] for p in self.P for r in self.P if r != p) >= int(self.Q.loc[i]),
+            model.addConstr(quicksum(int(self.s[k]) * f[i, k] for k in self.K) +
+                            quicksum(self.delta[i, p[0]] * t[p] for p in self.P) -
+                            quicksum(self.delta[i, p[0]] * float(self.b.loc[p]) * t[p] for p in self.P) >= int(self.Q.loc[i]),
                             name='C4')
+        print("Added Constraint: C4")
+        for p in list(self.R.keys()):
+            model.addConstr(quicksum(t[p, r] for r in self.R[p]) <= self.D[p], name='C5')
+        print("Added Constraint: C5")
 
-        for p in self.P:
-            model.addConstr(quicksum(t[p, r] for r in self.P) <= self.D[p], name='C5')
+        model.write('model.lp')
 
         model.update()
 
