@@ -74,8 +74,8 @@ class RMP:
 
         for i in self.L:
             model.addConstr(quicksum(self.s[k] * f[i, k] for k in self.K) +
-                            quicksum(quicksum(delta[i, p] * t[p, r] for p in self.P) for r in self.P) -
-                            quicksum(quicksum(delta[i, p] * b[r, p] * t[r, p] for p in self.P) for r in self.P) > Q[i],
+                            quicksum(quicksum(self.delta[i, p] * t[p, r] for p in self.P) for r in self.P) -
+                            quicksum(quicksum(self.delta[i, p] * self.b.loc[r, p] * t[r, p] for p in self.P) for r in self.P) > self.Q[i],
                             name='C4')
 
         for p in self.P:
