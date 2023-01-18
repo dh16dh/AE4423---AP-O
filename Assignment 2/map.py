@@ -10,6 +10,7 @@ ICAO_long = []
 ICAO_lat = []
 
 
+
 for i in ICAO:
     ICAO_long.append(database['longitude'].loc[i])
     ICAO_lat.append(database['latitude'].loc[i])
