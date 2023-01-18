@@ -84,6 +84,8 @@ class Parameters:
             demand_per_flight.append(new_flight)
         self.Q = pd.DataFrame(demand_per_flight).set_index(['Flight Number'])
 
+        print(int(self.Q.loc['AR1000']))
+
         # Convert departure and arrival times into seconds (int)
         self.flight_data['Departure'] = self.flight_data['Departure'].map(get_sec)
         self.flight_data['Arrival'] = self.flight_data['Arrival'].map(get_sec)

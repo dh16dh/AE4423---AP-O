@@ -15,7 +15,7 @@ class RMP:
         self.K = self.parameter_set.K  # set of aircraft types
         self.L = self.parameter_set.F  # set of flights
         self.P = self.parameter_set.P  # set of all passenger itineraries (paths)
-        self.Gk = self.parameter_set.G  # set of ground arcs  [k]
+        self.G = self.parameter_set.G  # set of ground arcs  [k]
         self.TC = self.parameter_set.TC  # set of unique time cuts   [k]
         self.NG = self.parameter_set.NG  # set of flight and ground arcs intercepted by the time cut  [k, tc]
         self.O = self.parameter_set.O  # flight arcs originating at node n in fleet k   [k, n]
@@ -29,7 +29,7 @@ class RMP:
         self.fare = self.parameter_set.fare  # average fare for itinerary p   [p]
 
         self.D = self.parameter_set.D  # daily unconstrained demand for itinerary p   [p]
-        self.Q = self.parameter_set.Q  # daily unconstrained demand on flight (leg) i   [i]
+        self.Q = self.parameter_set.Q  # daily unconstrained demand on flight (leg) i   .loc[i]
 
         self.b = self.parameter_set.b  # recapture rate of a pax that desired itinerary p and is allocated to r   .loc[p, r]
         self.delta = self.parameter_set.delta  # if flight i is in itinerary p [i, p]
@@ -46,13 +46,19 @@ class RMP:
         # Add Variables to Objective Function
         for i in self.L:
             for k in self.K:
-                f[i, k] = model.addVar(obj=self.cost[k][i], vtype=GRB.BINARY)
+                f[i, k] = model.addVar(obj=self.cost.loc[i, k], vtype=GRB.BINARY)
+                y[i, k] = model.addVar(ub=0, vtype=GRB.INTEGER)
 
         for p in self.P:
             for r in self.P:
                 if p == r:
                     continue
                 t[p, r] = model.addVar(obj=self.fare[p] - (self.b.loc[p, r] * self.fare[r]), vtype=GRB.INTEGER)
+
+        for k in self.K:
+            for a in self.G[k]:
+                y[a, k] = model.addVar(vtype=GRB.INTEGER)
+                f[a, k] = model.addVar(ub=0, vtype=GRB.BINARY)
 
         model.update()
         model.setObjective(model.getObjective(), GRB.MINIMIZE)
@@ -67,15 +73,14 @@ class RMP:
                     y[self.n_plus[k, n], k] + quicksum(f[i, k] for i in self.O[k, n]) - y[self.n_min[k, n], k] - quicksum(
                         f[i, k] for i in self.I[k, n]) == 0, name='C2')
 
-        for t in self.TC:
-            for k in self.K:
-                print(self.NG[k, t])
-                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, t]) <= self.ac[k], name='C3')
+        for k in self.K:
+            for tc in self.TC[k]:
+                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, tc]) <= self.ac[k], name='C3')
 
         for i in self.L:
             model.addConstr(quicksum(self.s[k] * f[i, k] for k in self.K) +
-                            quicksum(quicksum(self.delta[i, p] * t[p, r] for p in self.P) for r in self.P) -
-                            quicksum(quicksum(self.delta[i, p] * self.b.loc[r, p] * t[r, p] for p in self.P) for r in self.P) > self.Q[i],
+                            quicksum(self.delta[i, p] * t[p, r] for p in self.P for r in self.P if r != p) -
+                            quicksum(self.delta[i, p] * self.b.loc[r, p] * t[r, p] for p in self.P for r in self.P if r != p) >= int(self.Q.loc[i]),
                             name='C4')
 
         for p in self.P:
