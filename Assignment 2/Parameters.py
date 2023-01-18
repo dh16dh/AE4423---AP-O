@@ -30,7 +30,7 @@ def get_hhmmss(time_int):
 
 class Parameters:
     def __init__(self,
-                 aircraft_data=os.path.join(os.getcwd(), 'Group_data_17', 'Aircraft_data.csv'),
+                 aircraft_data='Group_data_17/Aircraft_data.csv',
                  flight_data='Group_data_17/Flight_data.csv',
                  itinerary_data='Group_data_17/Itinerary_data.csv',
                  new_flight_data='Group_data_17/New_flight_data.csv',
@@ -135,13 +135,19 @@ class Parameters:
 
         # Determine set of outbound and inbound flight arcs per node and per AC type
         for k in self.K:
-            for n in self.N_O[k]:
-                df = k_outbound[k].loc[[n]]
-                flight_arc = list(df['Flight Number'])
+            for n in self.N[k]:
+                if n in self.N_O[k]:
+                    df = k_outbound[k].loc[[n]]
+                    flight_arc = list(df['Flight Number'])
+                else:
+                    flight_arc = []
                 self.O[k, n] = flight_arc
-            for n in self.N_I[k]:
-                df = k_inbound[k].loc[[n]]
-                flight_arc = list(df['Flight Number'])
+            for n in self.N[k]:
+                if n in self.N_I[k]:
+                    df = k_inbound[k].loc[[n]]
+                    flight_arc = list(df['Flight Number'])
+                else:
+                    flight_arc = []
                 self.I[k, n] = flight_arc
 
         # Define set of ground links and set of ground links for DataFrame
