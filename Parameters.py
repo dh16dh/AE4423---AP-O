@@ -77,6 +77,17 @@ class Parameters:
         new_b = pd.DataFrame(new_b).set_index(['From Itinerary', 'To Itinerary'])
         self.b = new_b.combine_first(self.b)
 
+        self.Flights_in_P = dict()
+        for p in self.P:
+            flight1 = self.itinerary_data['Leg 1'][p]
+            flight2 = self.itinerary_data['Leg 2'][p]
+            flights_in_p = []
+            if flight1 != '0':
+                flights_in_p.append(flight1)
+            if flight2 != '0':
+                flights_in_p.append(flight2)
+            self.Flights_in_P[p] = flights_in_p
+
         demand_per_flight = []
         self.delta = dict()
         for f in self.F:
