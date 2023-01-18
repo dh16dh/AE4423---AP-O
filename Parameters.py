@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from itertools import permutations
+from itertools import product
 import time
 import os
 
@@ -62,22 +62,20 @@ class Parameters:
         self.D = self.itinerary_data['Demand']
         self.fare = self.itinerary_data['Fare']
 
-        # itinerary_pairs = list(permutations(self.P, 2))
-        # index = pd.MultiIndex.from_tuples(itinerary_pairs, names=('From Itinerary', 'To Itinerary'))
-        # values = np.zeros(len(itinerary_pairs))
-        # self.b = pd.DataFrame(values, columns=['Recapture Rate'], index=index)
-        # self.b = self.recapture_rate.combine_first(self.b)  # to get recapture rate use self.b.loc[p, r]
+        itinerary_pairs = list(product(self.P, repeat=2))
+        index = pd.MultiIndex.from_tuples(itinerary_pairs, names=('From Itinerary', 'To Itinerary'))
+        values = np.zeros(len(itinerary_pairs))
+        self.b = pd.DataFrame(values, columns=['Recapture Rate'], index=index)
+        self.b = self.recapture_rate.combine_first(self.b)  # to get recapture rate use self.b.loc[p, r]
 
-        self.b = self.recapture_rate['Recapture Rate']
-        self.Pi = list(self.recapture_rate.index)
-
-        Pr = self.recapture_rate.groupby(level=0)
-        self.Pr = dict()
-        for name, group in Pr:
-            p_list = list(group.index.get_level_values(0))
-            r_list = list(group.index.get_level_values(1))
-            p = p_list[0]
-            self.Pr[p] = r_list
+        new_b = []
+        for p in self.P:
+            new_recapture = {'From Itinerary': p,
+                             'To Itinerary': 9999,
+                             'Recapture Rate': 1}
+            new_b.append(new_recapture)
+        new_b = pd.DataFrame(new_b).set_index(['From Itinerary', 'To Itinerary'])
+        self.b = new_b.combine_first(self.b)
 
         demand_per_flight = []
         self.delta = dict()

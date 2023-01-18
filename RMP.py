@@ -14,8 +14,8 @@ class RMP:
         self.N = self.parameter_set.N  # set of nodes  [k]
         self.K = self.parameter_set.K  # set of aircraft types
         self.L = self.parameter_set.F  # set of flights
-        self.P = self.parameter_set.Pi  # set of all passenger itineraries (paths)
-        self.R = self.parameter_set.Pr
+        self.P = self.parameter_set.P  # set of all passenger itineraries (paths)
+        # self.R = self.parameter_set.Pr
         self.G = self.parameter_set.G  # set of ground arcs  [k]
         self.TC = self.parameter_set.TC  # set of unique time cuts   [k]
         self.NG = self.parameter_set.NG  # set of flight and ground arcs intercepted by the time cut  [k, tc]
@@ -47,16 +47,16 @@ class RMP:
         # Add Variables to Objective Function
         for i in self.L:
             for k in self.K:
-                f[i, k] = model.addVar(obj=self.cost.loc[i, k], vtype=GRB.BINARY)
-                y[i, k] = model.addVar(ub=0)
+                f[i, k] = model.addVar(obj=self.cost.loc[i, k], vtype=GRB.BINARY, name=f'f-{i}-{k}')
+                y[i, k] = model.addVar(ub=0, vtype=GRB.INTEGER, name=f'y-{i}-{k}')
 
         for p in self.P:
-                t[p] = model.addVar(obj=self.fare[p[0]] - (self.b.loc[p] * self.fare[p[1]]), vtype=GRB.INTEGER)
+            t[p, 9999] = model.addVar(obj=self.fare[p] - (self.b.loc[p, 9999] * self.fare[9999]), vtype=GRB.INTEGER, name=f't-{p}')
 
         for k in self.K:
             for a in self.G[k]:
-                y[a, k] = model.addVar(vtype=GRB.INTEGER)
-                f[a, k] = model.addVar(ub=0)
+                y[a, k] = model.addVar(vtype=GRB.INTEGER, name=f'y-{a}-{k}')
+                f[a, k] = model.addVar(ub=0, vtype=GRB.BINARY, name=f'f-{a}-{k}')
 
         model.update()
         model.setObjective(model.getObjective(), GRB.MINIMIZE)
@@ -73,17 +73,15 @@ class RMP:
                         f[i, k] for i in self.I[k, n]) == 0, name='C2')
         print("Added Constraint: C2")
         for k in self.K:
-            for tc in self.TC[k]:
-                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, tc]) <= self.ac[k], name='C3')
+            model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, self.TC[k][0]]) <= self.ac[k], name='C3')
         print("Added Constraint: C3")
         for i in self.L:
             model.addConstr(quicksum(int(self.s[k]) * f[i, k] for k in self.K) +
-                            quicksum(self.delta[i, p[0]] * t[p] for p in self.P) -
-                            quicksum(self.delta[i, p[0]] * float(self.b.loc[p]) * t[p] for p in self.P) >= int(self.Q.loc[i]),
+                            quicksum(self.delta[i, p] * t[p, 9999] for p in self.P) >= int(self.Q.loc[i]),
                             name='C4')
         print("Added Constraint: C4")
-        for p in list(self.R.keys()):
-            model.addConstr(quicksum(t[p, r] for r in self.R[p]) <= self.D[p], name='C5')
+        for p in self.P:
+            model.addConstr(t[p, 9999] <= self.D[p], name='C5')
         print("Added Constraint: C5")
 
         model.write('model.lp')
@@ -104,6 +102,8 @@ class RMP:
         elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
             print('Optimization was stopped with status %d' % status)
 
+
+# - quicksum(self.delta[i, p] * float(self.b.loc[9999, p]) * t[9999, p] for p in self.P)
 
 if __name__ == '__main__':
     relax_model = RMP().rmp_model()
