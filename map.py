@@ -3,8 +3,8 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-flight_data = pd.read_csv('Assignment 2/Group_data_17/Flight_data.csv', sep=';')
-database = pd.read_csv('Assignment 2/AirportDB.csv', index_col=0)
+flight_data = pd.read_csv('Group_data_17/Flight_data.csv', sep=';')
+database = pd.read_csv('AirportDB.csv', index_col=0)
 ICAO = flight_data['ORG'].unique()
 ICAO_long = []
 ICAO_lat = []
