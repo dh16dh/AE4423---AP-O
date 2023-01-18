@@ -17,7 +17,7 @@ class RMP:
         self.P = self.parameter_set.P  # set of all passenger itineraries (paths)
         self.Gk = self.parameter_set.G  # set of ground arcs  [k]
         self.TC = self.parameter_set.TC  # set of unique time cuts   [k]
-        self.NGk = self.parameter_set.NG  # set of flight and ground arcs intercepted by the time cut  [k, tc]
+        self.NG = self.parameter_set.NG  # set of flight and ground arcs intercepted by the time cut  [k, tc]
         self.O = self.parameter_set.O  # flight arcs originating at node n in fleet k   [k, n]
         self.I = self.parameter_set.I  # flight arcs terminating at node n in fleet k   [k, n]
         self.n_plus = self.parameter_set.n_plus  # ground arcs originating at any node n    n+[k, n]
@@ -46,10 +46,12 @@ class RMP:
         # Add Variables to Objective Function
         for i in self.L:
             for k in self.K:
-                f[i, k] = model.addVar(obj=self.cost[k][i], vtype=GRB.CONTINIOUS)
+                f[i, k] = model.addVar(obj=self.cost[k][i], vtype=GRB.BINARY)
 
         for p in self.P:
             for r in self.P:
+                if p == r:
+                    continue
                 t[p, r] = model.addVar(obj=self.fare[p] - (self.b.loc[p, r] * self.fare[r]), vtype=GRB.INTEGER)
 
         model.update()
@@ -62,12 +64,13 @@ class RMP:
         for k in self.K:
             for n in self.N[k]:
                 model.addConstr(
-                    y[self.n_plus[k, n], k] + quicksum(f[i, k] for i in self.O[k, n]) - y[self.n_min, k] - quicksum(
+                    y[self.n_plus[k, n], k] + quicksum(f[i, k] for i in self.O[k, n]) - y[self.n_min[k, n], k] - quicksum(
                         f[i, k] for i in self.I[k, n]) == 0, name='C2')
 
-        for cut in self.TC:
+        for t in self.TC:
             for k in self.K:
-                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NGk) <= self.ac, name='C3')
+                print(self.NG[k, t])
+                model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, t]) <= self.ac[k], name='C3')
 
         for i in self.L:
             model.addConstr(quicksum(self.s[k] * f[i, k] for k in self.K) +
@@ -96,4 +99,4 @@ class RMP:
 
 
 if __name__ == '__main__':
-    relax_model = RMP()
+    relax_model = RMP().rmp_model()
