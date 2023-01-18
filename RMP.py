@@ -32,7 +32,7 @@ class RMP:
         self.D = self.parameter_set.D  # daily unconstrained demand for itinerary p   [p]
         self.Q = self.parameter_set.Q  # daily unconstrained demand on flight (leg) i   .loc[i]
 
-        self.b = self.parameter_set.b  # recapture rate of a pax that desired itinerary p and is allocated to r   .loc[p, r]
+        self.b = self.parameter_set.b  # recapture rate of a pax that desired itinerary p and is allocated to r .loc[p, r]
         self.delta = self.parameter_set.delta  # if flight i is in itinerary p [i, p]
 
     def rmp_model(self):
@@ -51,7 +51,8 @@ class RMP:
                 y[i, k] = model.addVar(ub=0, vtype=GRB.INTEGER, name=f'y-{i}-{k}')
 
         for p in self.P:
-            t[p, 9999] = model.addVar(obj=self.fare[p] - (self.b.loc[p, 9999] * self.fare[9999]), vtype=GRB.INTEGER, name=f't-{p}')
+            t[p, 9999] = model.addVar(obj=self.fare[p] - (self.b.loc[p, 9999] * self.fare[9999]), vtype=GRB.INTEGER,
+                                      name=f't-{p}')
 
         for k in self.K:
             for a in self.G[k]:
@@ -64,46 +65,95 @@ class RMP:
 
         # Define Constraints
         for i in self.L:
-            model.addConstr(quicksum(f[i, k] for k in self.K) == 1, name='C1')
+            model.addConstr(quicksum(f[i, k] for k in self.K) == 1, name=f'C1-{i}')
         print("Added Constraint: C1")
         for k in self.K:
             for n in self.N[k]:
                 model.addConstr(
-                    y[self.n_plus[k, n], k] + quicksum(f[i, k] for i in self.O[k, n]) - y[self.n_min[k, n], k] - quicksum(
-                        f[i, k] for i in self.I[k, n]) == 0, name='C2')
+                    y[self.n_plus[k, n], k] + quicksum(f[i, k] for i in self.O[k, n]) - y[
+                        self.n_min[k, n], k] - quicksum(
+                        f[i, k] for i in self.I[k, n]) == 0, name=f'C2-{k}-{n}')
         print("Added Constraint: C2")
         for k in self.K:
-            model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, self.TC[k][0]]) <= self.ac[k], name='C3')
+            model.addConstr(quicksum(y[a, k] + f[a, k] for a in self.NG[k, self.TC[k][0]]) <= self.ac[k], name=f'C3-{k}')
         print("Added Constraint: C3")
         for i in self.L:
             model.addConstr(quicksum(int(self.s[k]) * f[i, k] for k in self.K) +
                             quicksum(self.delta[i, p] * t[p, 9999] for p in self.P) >= int(self.Q.loc[i]),
-                            name='C4')
+                            name=f'C4-{i}')
         print("Added Constraint: C4")
         for p in self.P:
-            model.addConstr(t[p, 9999] <= self.D[p], name='C5')
+            model.addConstr(t[p, 9999] <= self.D[p], name=f'C5-{p}')
         print("Added Constraint: C5")
 
         model.write('model.lp')
 
         model.update()
 
-        model.optimize()
-        status = model.status
+        return model
 
-        if status == GRB.Status.UNBOUNDED:
-            print('The model cannot be solved because it is unbounded')
+    def get_rmp_results(self):
+        model = self.rmp_model()
 
-        elif status == GRB.Status.OPTIMAL or True:
-            f_objective = model.objVal
-            print('***** RESULTS ******')
-            print('\nObjective Function Value: \t %g' % f_objective)
+        model_relax = model.relax()
+        model_relax.optimize()
 
-        elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
-            print('Optimization was stopped with status %d' % status)
+        pi_list = []
+        for i in self.L:
+            pi = model_relax.getConstrByName(f'C4-{i}').Pi
+            pi_list.append(pi)
+
+
+    def column_generation(self):
+        model = self.rmp_model()
+
+        model_relax = model.relax()
+        model_relax.optimize()
+
+        pi_list = dict()
+        sigma_list = dict()
+        for i in self.L:
+            pi = model_relax.getConstrByName(f'C4-{i}').Pi
+            pi_list[i] = pi
+        for p in self.P:
+            sigma = model_relax.getConstrByName(f'C5-{p}').Pi
+            sigma_list[p] = sigma
+        #
+        # print(pi_list)
+        # print(sigma_list)
+
+        blacklist = []
+
+        cpr = dict()
+        for p in self.P:
+            blacklist.append((p, 9999))
+            for r in self.P:
+                if p == r or (p, r) in blacklist:
+                    continue
+                lhs = []
+                for i in self.L:
+                    lhs.append((self.delta[i, p] - self.delta[i, r] * self.b.loc[p, r]) * pi_list[i])
+                cpr[p, r] = sum(lhs) + sigma_list[p] - (self.fare[p] - self.b.loc[p, r] * self.fare[r])
+            print(p)
+
+        print(cpr)
+        #
+        # status = model.status
+        #
+        # if status == GRB.Status.UNBOUNDED:
+        #     print('The model cannot be solved because it is unbounded')
+        #
+        # elif status == GRB.Status.OPTIMAL or True:
+        #     f_objective = model.objVal
+        #     print('***** RESULTS ******')
+        #     print('\nObjective Function Value: \t %g' % f_objective)
+        #
+        # elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
+        #     print('Optimization was stopped with status %d' % status)
 
 
 # - quicksum(self.delta[i, p] * float(self.b.loc[9999, p]) * t[9999, p] for p in self.P)
 
 if __name__ == '__main__':
-    relax_model = RMP().rmp_model()
+    relax_model = RMP().column_generation()
+
