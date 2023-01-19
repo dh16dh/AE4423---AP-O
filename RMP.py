@@ -2,8 +2,11 @@
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from gurobipy import Model, GRB, LinExpr, quicksum
+from gurobipy import Model, GRB, Column, quicksum
 from Parameters import Parameters
+import time
+
+pd.set_option('display.max_columns', None)
 
 
 class RMP:
@@ -40,6 +43,12 @@ class RMP:
 
         self.F_in_P = self.parameter_set.Flights_in_P
 
+        self.C1 = {}
+        self.C2 = {}
+        self.C3 = {}
+        self.C4 = {}
+        self.C5 = {}
+
     def rmp_model(self):
         # Initialise gurobipy model
         model = Model("RMP")
@@ -58,7 +67,7 @@ class RMP:
         for p in self.P:
             self.t[p, 9999] = model.addVar(obj=self.fare[p] - (self.b.loc[p, 9999] * self.fare[9999]),
                                            vtype=GRB.INTEGER,
-                                           name=f't-{p}')
+                                           name=f't-{p}-{9999}')
 
         for k in self.K:
             for a in self.G[k]:
@@ -71,26 +80,26 @@ class RMP:
 
         # Define Constraints
         for i in self.L:
-            model.addConstr(quicksum(self.f[i, k] for k in self.K) == 1, name=f'C1-{i}')
+            self.C1[i] = model.addConstr(quicksum(self.f[i, k] for k in self.K) == 1, name=f'C1-{i}')
         print("Added Constraint: C1")
         for k in self.K:
             for n in self.N[k]:
-                model.addConstr(
+                self.C2[k, n] = model.addConstr(
                     self.y[self.n_plus[k, n], k] + quicksum(self.f[i, k] for i in self.O[k, n]) - self.y[
                         self.n_min[k, n], k] - quicksum(
                         self.f[i, k] for i in self.I[k, n]) == 0, name=f'C2-{k}-{n}')
         print("Added Constraint: C2")
         for k in self.K:
-            model.addConstr(quicksum(self.y[a, k] + self.f[a, k] for a in self.NG[k, self.TC[k][0]]) <= self.ac[k],
+            self.C3[k] = model.addConstr(quicksum(self.y[a, k] + self.f[a, k] for a in self.NG[k, self.TC[k][0]]) <= self.ac[k],
                             name=f'C3-{k}')
         print("Added Constraint: C3")
         for i in self.L:
-            model.addConstr(quicksum(int(self.s[k]) * self.f[i, k] for k in self.K) +
+            self.C4[i] = model.addConstr(quicksum(int(self.s[k]) * self.f[i, k] for k in self.K) +
                             quicksum(self.delta[i, p] * self.t[p, 9999] for p in self.P) >= int(self.Q.loc[i]),
                             name=f'C4-{i}')
         print("Added Constraint: C4")
         for p in self.P:
-            model.addConstr(self.t[p, 9999] <= self.D[p], name=f'C5-{p}')
+            self.C5[p] = model.addConstr(self.t[p, 9999] <= self.D[p], name=f'C5-{p}')
         print("Added Constraint: C5")
 
         model.write('model.lp')
@@ -101,6 +110,38 @@ class RMP:
 
     def get_rmp_results(self):
         model = self.rmp_model()
+
+        model.optimize()
+
+        status = model.status
+
+        if status == GRB.Status.UNBOUNDED:
+            print('The model cannot be solved because it is unbounded')
+
+        elif status == GRB.Status.OPTIMAL or True:
+            f_objective = model.objVal
+            print('***** RESULTS ******')
+            print('\nObjective Function Value: \t %g' % f_objective)
+
+        elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
+            print('Optimization was stopped with status %d' % status)
+        optimal_dv_list = []
+        i = 0
+        while len(optimal_dv_list) < 5:
+            p = self.P[i]
+            var = self.t[p, 9999].X
+            if var is not None:
+                if var > 0:
+                    optimal_dv_list.append({'From Itinerary': p,
+                                            'To Itinerary': 9999,
+                                            'Value': var})
+            i += 1
+
+        optimal_dv = pd.DataFrame(optimal_dv_list)
+        print('\nUnrelaxed First Five Non-Null Decision Variable Values ')
+        print(optimal_dv)
+
+        print('***** RUN RELAXED MODEL *****')
 
         model_relax = model.relax()
         model_relax.optimize()
@@ -122,7 +163,7 @@ class RMP:
         i = 0
         while len(optimal_dv_list) < 5:
             p = self.P[i]
-            var = model_relax.getVarByName(f't-{p}')
+            var = model_relax.getVarByName(f't-{p}-{9999}')
             if var.X > 0:
                 optimal_dv_list.append({'From Itinerary': p,
                                         'To Itinerary': 9999,
@@ -145,16 +186,25 @@ class RMP:
         pi_dv = pd.DataFrame(pi_list)
         print(pi_dv)
 
-    def column_generation(self, cols_to_add, iterations=20):
+    def column_generation(self, cols_to_add=None, iterations=20):
         model = self.rmp_model()
 
         exit_condition = False
         it_num = 0
 
+        results = []
+
         while exit_condition is False and it_num < iterations:
+
+            model_start_time = time.time()
 
             model_relax = model.relax()
             model_relax.optimize()
+
+            model_runtime = time.time() - model_start_time
+            print('\nModel Runtime: \t %g' % model_runtime)
+
+            column_gen_start_time = time.time()
 
             pi_list = dict()
             sigma_list = dict()
@@ -175,17 +225,78 @@ class RMP:
                     if p == r or (p, r) in blacklist:
                         continue
                     value = (self.fare[p] - sum([pi_list[i] for i in self.F_in_P[p]])) - float(self.b.loc[p, r]) * (
-                                self.fare[r] - sum([pi_list[j] for j in self.F_in_P[r]])) - sigma_list[p]
+                            self.fare[r] - sum([pi_list[j] for j in self.F_in_P[r]])) - sigma_list[p]
                     if value < -0.0001:
                         cpr[p, r] = value
-                print(p)
 
-            cpr = sorted(cpr.items(), key=lambda x:x[1])
-            print(cpr)
+            cpr = sorted(cpr.items(), key=lambda x: x[1])
+            if cols_to_add is not None:
+                cols_to_add = min(cols_to_add, len(cpr))
+            else:
+                cols_to_add = len(cpr)
 
+            print('Iteration Number', it_num)
+            print('Column(s) Added')
+            columns_added = []
+            for c in range(cols_to_add):
+                p, r = cpr[c][0]
+                col_pr = Column()
+                col_rp = Column()
+                # Adding to C4
+                for i in self.L:
+                    coef_pr = self.delta[i, p]
+                    constr_pr = self.C4[i]
+                    col_pr.addTerms(coef_pr, constr_pr)
+                    coef_rp = -self.delta[i, p] * float(self.b.loc[r, p])
+                    constr_rp = self.C4[i]
+                    col_rp.addTerms(coef_rp, constr_rp)
+                # Adding to C5
+                coef_pr = float(1)
+                constr_pr = self.C5[p]
+                col_pr.addTerms(coef_pr, constr_pr)
+                coef_rp = float(1)
+                constr_rp = self.C5[r]
+                col_rp.addTerms(coef_rp, constr_rp)
+                obj_coef_pr = self.fare[p] - float(self.b.loc[p, r]) * self.fare[r]
+                obj_coef_rp = self.fare[r] - float(self.b.loc[r, p]) * self.fare[p]
+                self.t[p, r] = model.addVar(obj=obj_coef_pr, vtype=GRB.INTEGER, name=f't-{p}-{r}', column=col_pr)
+                self.t[r, p] = model.addVar(obj=obj_coef_rp, vtype=GRB.INTEGER, name=f't-{r}-{p}', column=col_rp)
+                blacklist.append((p, r))
+                blacklist.append((r, p))
+                model.update()
+                print('Column', c, 't[', p, ',', r, ']')
+                columns_added.append((p, r))
 
-# - quicksum(self.delta[i, p] * float(self.b.loc[9999, p]) * t[9999, p] for p in self.P)
+            column_gen_runtime = time.time() - column_gen_start_time
+
+            new_iteration = {'Iteration Number': it_num,
+                             'Model Runtime': model_runtime,
+                             'ColGen Runtime': column_gen_runtime,
+                             'Columns Added': columns_added}
+            results.append(new_iteration)
+            if len(cpr) == 0:
+                exit_condition = True
+            it_num += 1
+
+        model.optimize()
+
+        status = model.status
+
+        if status == GRB.Status.UNBOUNDED:
+            print('The model cannot be solved because it is unbounded')
+
+        elif status == GRB.Status.OPTIMAL or True:
+            f_objective = model.objVal
+            print('***** RESULTS ******')
+            print('\nObjective Function Value: \t %g' % f_objective)
+
+        elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
+            print('Optimization was stopped with status %d' % status)
+
+        return pd.DataFrame(results).set_index('Iteration Number')
+
 
 if __name__ == '__main__':
-    RMP().get_rmp_results()
-    RMP().column_generation(2)
+    # RMP().get_rmp_results()
+    column_gen_results = RMP().column_generation()
+    column_gen_results.to_csv('ColumnGenerationKPIs.csv')
