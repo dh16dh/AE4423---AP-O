@@ -145,44 +145,47 @@ class RMP:
         pi_dv = pd.DataFrame(pi_list)
         print(pi_dv)
 
-    def column_generation(self):
+    def column_generation(self, cols_to_add, iterations=20):
         model = self.rmp_model()
 
-        model_relax = model.relax()
-        model_relax.optimize()
+        exit_condition = False
+        it_num = 0
 
-        pi_list = dict()
-        sigma_list = dict()
-        for i in self.L:
-            pi = model_relax.getConstrByName(f'C4-{i}').Pi
-            pi_list[i] = pi
-        for p in self.P:
-            sigma = model_relax.getConstrByName(f'C5-{p}').Pi
-            sigma_list[p] = sigma
+        while exit_condition is False and it_num < iterations:
 
-        print(pi_list)
-        print(sigma_list)
+            model_relax = model.relax()
+            model_relax.optimize()
 
-        blacklist = []
+            pi_list = dict()
+            sigma_list = dict()
+            for i in self.L:
+                pi = model_relax.getConstrByName(f'C4-{i}').Pi
+                pi_list[i] = pi
+            for p in self.P:
+                sigma = model_relax.getConstrByName(f'C5-{p}').Pi
+                sigma_list[p] = sigma
 
-        cpr = dict()
-        for p in self.P:
-            blacklist.append((p, 9999))
-        for p in self.P:
-            for r in self.P:
-                if p == r or (p, r) in blacklist:
-                    continue
-                value = (self.fare[p] - sum([pi_list[i] for i in self.F_in_P[p]])) - float(self.b.loc[p, r]) * (
-                            self.fare[r] - sum([pi_list[j] for j in self.F_in_P[r]])) - sigma_list[p]
-                if value < 0:
-                    cpr[p, r] = value
-            print(p)
+            blacklist = []
 
-        cpr = sorted(cpr.items(), key=lambda x:x[1])
+            cpr = dict()
+            for p in self.P:
+                blacklist.append((p, 9999))
+            for p in self.P:
+                for r in self.P:
+                    if p == r or (p, r) in blacklist:
+                        continue
+                    value = (self.fare[p] - sum([pi_list[i] for i in self.F_in_P[p]])) - float(self.b.loc[p, r]) * (
+                                self.fare[r] - sum([pi_list[j] for j in self.F_in_P[r]])) - sigma_list[p]
+                    if value < -0.0001:
+                        cpr[p, r] = value
+                print(p)
+
+            cpr = sorted(cpr.items(), key=lambda x:x[1])
+            print(cpr)
 
 
 # - quicksum(self.delta[i, p] * float(self.b.loc[9999, p]) * t[9999, p] for p in self.P)
 
 if __name__ == '__main__':
     RMP().get_rmp_results()
-    RMP().column_generation()
+    RMP().column_generation(2)
