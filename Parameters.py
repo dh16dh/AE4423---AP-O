@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from itertools import product
 import time
-import os
 
 
 def get_sec(time_str):
@@ -398,7 +397,6 @@ class Parameters:
                 else:
                     flight_arc = []
                 self.I[k, n] = flight_arc
-
 
         # Define set of ground links and set of ground links for DataFrame
         self.G = dict()

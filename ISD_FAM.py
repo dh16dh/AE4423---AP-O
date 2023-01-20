@@ -304,11 +304,21 @@ class ISD_FAM:
         itineraries_excluded = []
         for q in self.P_O:
             flight = self.Optional_P.loc[q]
+            type_f1 = None
+            type_f2 = None
+            for k in self.K:
+                if self.f[flight['Leg 1'], k].X > 0:
+                    type_f1 = k
+                if flight['Leg 2'] != '0' and flight['Leg 2'] != 0:
+                    if self.f[flight['Leg 2'], k].X > 0:
+                        type_f2 = k
             new_info = {'Itinerary': q,
                         'Origin': flight['Origin'],
                         'Destination': flight['Destination'],
                         'Leg 1': flight['Leg 1'],
-                        'Leg 2': flight['Leg 2']}
+                        'Type L1': type_f1,
+                        'Leg 2': flight['Leg 2'],
+                        'Type L2': type_f2}
             if self.Z[q].X > 0:
                 itineraries_added.append(new_info)
             else:
