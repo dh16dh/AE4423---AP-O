@@ -1,7 +1,5 @@
 # Import relevant modules
 import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 from gurobipy import Model, GRB, Column, quicksum
 from Parameters import Parameters
 import time
@@ -9,7 +7,7 @@ import time
 pd.set_option('display.max_columns', None)
 
 
-class RMP:
+class IFAM:
     def __init__(self):
         self.parameter_set = Parameters()
         self.parameter_set.IFAM()
@@ -348,6 +346,5 @@ class RMP:
 
 
 if __name__ == '__main__':
-    # RMP().get_rmp_results()
-    column_gen_results = RMP().column_generation()
+    column_gen_results = IFAM().column_generation()
     column_gen_results.to_csv('ColumnGenerationKPIs.csv')
