@@ -2,23 +2,27 @@
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from gurobipy import Model, GRB, Column, quicksum
+from gurobipy import Model, GRB, Column, LinExpr, quicksum
 from Parameters import Parameters
 import time
 
 pd.set_option('display.max_columns', None)
 
 
-class RMP:
+class ISD_FAM:
     def __init__(self):
         self.parameter_set = Parameters()
-        self.parameter_set.IFAM()
+        self.parameter_set.ISD_FAM()
 
         # Define Sets
         self.N = self.parameter_set.N  # set of nodes  [k]
         self.K = self.parameter_set.K  # set of aircraft types
-        self.L = self.parameter_set.F  # set of flights
+        self.L = self.parameter_set.L  # set of flights
+        self.L_O = self.parameter_set.L_O  # set of optional flights
+        self.L_F = self.parameter_set.L_F  # set of mandatory flights
+        self.Lq = self.parameter_set.Lq  # set of flights in itinerary q  [q]
         self.P = self.parameter_set.P  # set of all passenger itineraries (paths)
+        self.P_O = self.parameter_set.P_O  # set of itineraries containing optional flights
         self.G = self.parameter_set.G  # set of ground arcs  [k]
         self.TC = self.parameter_set.TC  # set of unique time cuts   [k]
         self.NG = self.parameter_set.NG  # set of flight and ground arcs intercepted by the time cut  [k, tc]
@@ -34,6 +38,7 @@ class RMP:
 
         self.D = self.parameter_set.D  # daily unconstrained demand for itinerary p   [p]
         self.Q = self.parameter_set.Q  # daily unconstrained demand on flight (leg) i   .loc[i]
+        self.Nq = self.parameter_set.Nq  # number of flights in itinerary q [q]
 
         self.b = self.parameter_set.b  # recapture rate of a pax that desired itinerary p and is allocated to r .loc[p, r]
         self.delta = self.parameter_set.delta  # if flight i is in itinerary p [i, p]
@@ -41,34 +46,41 @@ class RMP:
         self.f = {}
         self.y = {}
         self.t = {}
+        self.Z = {}
 
-        self.F_in_P = self.parameter_set.Flights_in_P
+        self.F_in_P = self.parameter_set.Lp
+        self.Optional_P = self.parameter_set.optional_itinerary_df
 
-        self.C1 = {}
+        self.C1_F = {}
+        self.C1_O = {}
         self.C2 = {}
         self.C3 = {}
         self.C4 = {}
         self.C5 = {}
+        self.C6 = {}
+        self.C7 = {}
 
-    def rmp_model(self):
+    def isd_fam_model(self):
         # Initialise gurobipy model
-        model = Model("RMP")
+        model = Model("ISD_FAM")
 
         # Define Decision Variables
         self.f = {}  # 1 if flight arc i is assigned to aircraft type k, 0 otherwise [i, k]
         self.y = {}  # number of aircraft of type k on the ground arc a [a, k]
         self.t = {}  # number of passengers that would like to travel on itinerary p and are reallocated to itin. r [p, r]
+        self.Z = {}  # 1 if itinerary q is in flight schedule, 0 otherwise [q]
 
         # Add Variables to Objective Function
         for i in self.L:
             for k in self.K:
-                self.f[i, k] = model.addVar(obj=self.cost.loc[i, k], vtype=GRB.BINARY, name=f'f-{i}-{k}')
+                self.f[i, k] = model.addVar(vtype=GRB.BINARY, name=f'f-{i}-{k}')
                 self.y[i, k] = model.addVar(ub=0, vtype=GRB.INTEGER, name=f'y-{i}-{k}')
 
         for p in self.P:
-            self.t[p, 9999] = model.addVar(obj=self.fare[p] - (self.b.loc[p, 9999] * self.fare[9999]),
-                                           vtype=GRB.INTEGER,
-                                           name=f't-{p}-{9999}')
+            self.t[p, 9999] = model.addVar(vtype=GRB.INTEGER, name=f't-{p}-{9999}')
+
+        for q in self.P_O:
+            self.Z[q] = model.addVar(vtype=GRB.BINARY, name=f'Z-{q}')
 
         for k in self.K:
             for a in self.G[k]:
@@ -76,12 +88,26 @@ class RMP:
                 self.f[a, k] = model.addVar(ub=0, vtype=GRB.BINARY, name=f'f-{a}-{k}')
 
         model.update()
-        model.setObjective(model.getObjective(), GRB.MINIMIZE)
+
+        obj = LinExpr()
+        for i in self.L:
+            for k in self.K:
+                obj += self.cost.loc[i, k] * self.f[i, k]
+        for p in self.P:
+            obj += (self.fare[p] - (float(self.b.loc[p, 9999]) * self.fare[9999])) * self.t[p, 9999]
+        for q in self.P_O:
+            obj += self.fare[q] * self.D[q]
+            obj += - self.fare[q] * self.D[q] * self.Z[q]
+
+        model.setObjective(obj, GRB.MINIMIZE)
+        model.update()
         print("Objective Function Defined")
 
         # Define Constraints
-        for i in self.L:
-            self.C1[i] = model.addConstr(quicksum(self.f[i, k] for k in self.K) == 1, name=f'C1-{i}')
+        for i in self.L_F:
+            self.C1_F[i] = model.addConstr(quicksum(self.f[i, k] for k in self.K) == 1, name=f'C1.F-{i}')
+        for i in self.L_O:
+            self.C1_O[i] = model.addConstr(quicksum(self.f[i, k] for k in self.K) <= 1, name=f'C1.O-{i}')
         print("Added Constraint: C1")
         for k in self.K:
             for n in self.N[k]:
@@ -104,92 +130,22 @@ class RMP:
         for p in self.P:
             self.C5[p] = model.addConstr(self.t[p, 9999] <= self.D[p], name=f'C5-{p}')
         print("Added Constraint: C5")
+        for q in self.P_O:
+            for i in self.Lq[q]:
+                self.C6[q, i] = model.addConstr(self.Z[q] - quicksum(self.f[i, k] for k in self.K) <= 0, name=f'C6-{q}-{i}')
+        for q in self.P_O:
+            self.C7[q] = model.addConstr(self.Z[q] - quicksum(quicksum(self.f[i, k] for i in self.Lq[q]) for k in self.K) <= 0, name=f'C7-{q}')
 
-        model.write('model.lp')
+        print("Added Constraint: C6 & C7")
+
+        model.write('model_isd_fam.lp')
 
         model.update()
 
         return model
 
-    def get_rmp_results(self):
-        model = self.rmp_model()
-
-        model.optimize()
-
-        status = model.status
-
-        if status == GRB.Status.UNBOUNDED:
-            print('The model cannot be solved because it is unbounded')
-
-        elif status == GRB.Status.OPTIMAL or True:
-            f_objective = model.objVal
-            print('***** RESULTS ******')
-            print('\nObjective Function Value: \t %g' % f_objective)
-
-        elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
-            print('Optimization was stopped with status %d' % status)
-        optimal_dv_list = []
-        i = 0
-        while len(optimal_dv_list) < 5:
-            p = self.P[i]
-            var = self.t[p, 9999].X
-            if var > 0:
-                optimal_dv_list.append({'From Itinerary': p,
-                                        'To Itinerary': 9999,
-                                        'Value': var})
-            i += 1
-
-        optimal_dv = pd.DataFrame(optimal_dv_list)
-        print('\nUnrelaxed First Five Non-Null Decision Variable Values ')
-        print(optimal_dv)
-
-        print('***** RUN RELAXED MODEL *****')
-
-        model_relax = model.relax()
-        model_relax.optimize()
-
-        status = model_relax.status
-
-        if status == GRB.Status.UNBOUNDED:
-            print('The model cannot be solved because it is unbounded')
-
-        elif status == GRB.Status.OPTIMAL or True:
-            f_objective = model_relax.objVal
-            print('***** RESULTS ******')
-            print('\nObjective Function Value: \t %g' % f_objective)
-
-        elif status != GRB.Status.INF_OR_UNBD and status != GRB.Status.INFEASIBLE:
-            print('Optimization was stopped with status %d' % status)
-
-        optimal_dv_list = []
-        i = 0
-        while len(optimal_dv_list) < 5:
-            p = self.P[i]
-            var = model_relax.getVarByName(f't-{p}-{9999}')
-            if var.X > 0:
-                optimal_dv_list.append({'From Itinerary': p,
-                                        'To Itinerary': 9999,
-                                        'Value': var.X})
-            i += 1
-
-        optimal_dv = pd.DataFrame(optimal_dv_list)
-        print(optimal_dv)
-
-        pi_list = []
-        j = 0
-        while len(pi_list) < 5:
-            a = self.L[j]
-            pi = model_relax.getConstrByName(f'C4-{a}').Pi
-            if pi > 0:
-                pi_list.append({'Flight Number': a,
-                                'Dual Variable Value': pi})
-            j += 1
-
-        pi_dv = pd.DataFrame(pi_list)
-        print(pi_dv)
-
     def column_generation(self, cols_to_add=None, iterations=20):
-        model = self.rmp_model()
+        model = self.isd_fam_model()
 
         exit_condition = False
         it_num = 0
@@ -344,10 +300,32 @@ class RMP:
         print(t_df)
         print(f_df)
 
+        itineraries_added = []
+        itineraries_excluded = []
+        for q in self.P_O:
+            flight = self.Optional_P.loc[q]
+            new_info = {'Itinerary': q,
+                        'Origin': flight['Origin'],
+                        'Destination': flight['Destination'],
+                        'Leg 1': flight['Leg 1'],
+                        'Leg 2': flight['Leg 2']}
+            if self.Z[q].X > 0:
+                itineraries_added.append(new_info)
+            else:
+                itineraries_excluded.append(new_info)
+
+        included_df = pd.DataFrame(itineraries_added)
+        excluded_df = pd.DataFrame(itineraries_excluded)
+
+        print('Itineraries Included')
+        print(included_df)
+        print('Itineraries Excluded')
+        print(excluded_df)
+
         return pd.DataFrame(results_col_gen).set_index('Iteration Number')
 
 
 if __name__ == '__main__':
     # RMP().get_rmp_results()
-    column_gen_results = RMP().column_generation()
-    column_gen_results.to_csv('ColumnGenerationKPIs.csv')
+    column_gen_results = ISD_FAM().column_generation()
+    # column_gen_results.to_csv('ColumnGenerationKPIs.csv')

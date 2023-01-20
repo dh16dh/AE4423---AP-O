@@ -17,6 +17,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/ColumnGenerationKPIs.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/Group_data_17/Aircraft_data.csv">
           <value>
             <Attribute>
@@ -32,6 +39,27 @@
           </value>
         </entry>
         <entry key="/Group_data_17/Itinerary_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/Group_data_17/New_flight_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/Group_data_17/New_itinerary_data.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/Group_data_17/Optional_flight_data.csv">
           <value>
             <Attribute>
               <option name="separator" value=";" />
