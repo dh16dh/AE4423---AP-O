@@ -1,7 +1,5 @@
 # Import relevant modules
 import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 from gurobipy import Model, GRB, Column, LinExpr, quicksum
 from Parameters import Parameters
 import time
